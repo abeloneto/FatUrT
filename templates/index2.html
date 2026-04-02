@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Faturamento - Manutenção de Ônibus</title>
+    
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #eaedf0;
+            min-height: 100vh;
+        }
+        :root {
+      --neu-bg: #ebedf6;
+      --neu-shadow-light: #ffffff;
+      --neu-shadow-dark: #c5c5cc;
+      --neu-text: #83858f;
+      --neu-icon: #8e8ea0;
+        }
+        
+        /* ============================================
+           HEADER FIXO - ESTILO CORPORATIVO
+        ============================================ */
+        .top-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            z-index: 1000;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Logo e identidade visual */
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            justify-content: center;
+            margin-bottom: 21px;
+        }
+        
+        .logo-area img {
+            height: 45px;
+            width: auto;
+            object-fit: contain;
+        }
+        
+        .logo-text h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0;
+            line-height: 1.3;
+        }
+        
+        .logo-text p {
+            font-size: 12px;
+            color: #64748b;
+            margin: 0;
+        }
+        
+        /* Menu de navegação */
+        .nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .nav-item {
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #475569;
+            transition: all 0.2s;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .nav-item:hover {
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+        
+        .nav-item.active {
+            background: #0f172a;
+            color: white;
+        }
+        
+        .nav-item i {
+            font-size: 16px;
+        }
+        
+        /* Área do usuário */
+        .user-area {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 12px;
+            border-radius: 40px;
+            background: #f8fafc;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .user-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: #1e293b;
+        }
+        
+        .user-role {
+            font-size: 11px;
+            color: #64748b;
+        }
+        
+        /* ============================================
+           CONTEÚDO PRINCIPAL (COM ESPAÇO PARA O HEADER)
+        ============================================ */
+        .main-content {
+            padding-top: 85px; /* Altura do header fixo */
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            max-width: 550px;
+            width: 90%;
+            margin: 40px auto;
+        }
+        
+        /* Card de seleção */
+        .selection-card {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            overflow: hidden;
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #eaedf0 0%, #ffffff 100%);
+            padding: 28px 32px;
+            text-align: center;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .card-header h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 8px;
+            display: flex;
+        }
+        
+        .card-header p {
+            color: #64748b;
+            font-size: 14px;
+            display: flex;
+        }
+        
+        .card-body {
+            padding: 32px;
+            background: linear-gradient(135deg, #eaedf0 0%, #ffffff 100%);
+        }
+
+        .select-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        .select-wrapper select {
+            appearance: none;
+            -webkit-appearance: none;
+            background: #ffffff;
+            color: #83858f;
+            font-size: 14px;
+            font-family: -apple-system, 'SF Pro Text', sans-serif;
+            font-weight: 500;
+            padding: 10px 40px 10px 16px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            outline: none;
+            min-width: 160px;
+            width: 100%;
+        }
+        
+        .select-wrapper::after {
+
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 34px;
+            background: #ffffff;
+            border-radius: 0 50px 50px 0;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-color: #3fb271;
+
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #334155;
+            font-size: 14px;
+        }
+        
+        label i {
+            margin-right: px;
+            color: #64748b;
+        }
+        
+        select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.2s;
+            background: white;
+            cursor: pointer;
+        }
+        
+        select:focus {
+            outline: none;
+            border-color: #0f172a;
+            box-shadow: 0 0 0 3px rgba(15,23,42,0.1);
+        }
+        
+        .info-box {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 16px;
+            margin: 24px 0;
+            border-left: 4px solid #0f172a;
+        }
+        
+        .info-box p {
+            color: #475569;
+            font-size: 13px;
+            line-height: 1.5;
+            margin: 0;
+        }
+        
+        .info-box i {
+            color: #0f172a;
+            margin-right: 8px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: inherit;
+        }
+        
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 22px;
+            border-radius: 50px;
+            border: none;
+            background: var(--neu-bg);
+            color: var(--neu-text);
+            font-size: 16px;
+            font-family: -apple-system, 'SF Pro Text', Helvetica;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 2px 2px 4px var(--neu-shadow-dark), -2px -2px 4px var(--neu-shadow-light);
+            transition: box-shadow 0.15s ease, transform 0.1s ease;
+
+        }
+        
+        .btn-primary:hover {
+            background: #3fb271;
+            color: white;
+            font-weight: bold;
+            transform: translateY(-2px);
+            box-shadow: 7px 7px 15px var(--neu-shadow-dark), -7px -7px 15px var(--neu-shadow-light);
+        }
+        
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 22px;
+            border-radius: 50px;
+            border: none;
+            background: var(--neu-bg);
+            color: var(--neu-text);
+            font-size: 16px;
+            font-family: -apple-system, 'SF Pro Text', Helvetica;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 2px 2px 4px var(--neu-shadow-dark), -2px -2px 4px var(--neu-shadow-light);
+            transition: box-shadow 0.15s ease, transform 0.1s ease;
+
+        }
+        
+        .btn-secondary:hover {
+            background: #3fb271;
+            color: white;
+            font-weight: bold;
+            transform: translateY(-2px);
+            box-shadow: 7px 7px 15px var(--neu-shadow-dark), -7px -7px 15px var(--neu-shadow-light);
+
+        }
+        
+        .stats-preview {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .stats-preview h3 {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        
+        .stat-items {
+            display: flex;
+            justify-content: space-around;
+            gap: 12px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .stat-number {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        
+        .stat-label {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+        
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .header-container {
+                padding: 10px 16px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            .logo-area {
+                flex: 1;
+            }
+            
+            .logo-text h1 {
+                font-size: 14px;
+            }
+            
+            .logo-text p {
+                font-size: 10px;
+            }
+            
+            .nav-item span {
+                display: none;
+            }
+            
+            .nav-item {
+                padding: 8px 12px;
+            }
+            
+            .user-name, .user-role {
+                display: none;
+            }
+            
+            .main-content {
+                padding-top: 100px;
+            }
+            
+            .card-header {
+                padding: 20px;
+            }
+            
+            .card-body {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER FIXO - ESTILO CORPORATIVO -->
+    <header class="top-header">
+        <div class="header-container">
+            <!-- Logo e identidade -->
+                <div class="logo-area">
+            <img src="../static/3.png"
+                 alt="BRT Logo" 
+                 class="logo-img">
+                    <div class="logo-text"> 
+                        <h1>MAAS Serviços</h1>
+                                </div>
+    </header>
+    
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="main-content">
+        <div class="container">
+            <div class="selection-card">
+                <div class="card-header">
+                    <div class="logo-area">
+                    <img src="../static/brt.png" ><h1> Consório-BRT</h1>
+                </div>
+                    <h2> Relatório de Faturamento</h2>
+                    <p>Selecione o período para gerar o relatório de manutenções</p>
+                </div>
+                
+                <div class="card-body">
+                    <form action="/relatorio" method="get">
+                        <div class="form-group">
+                            <label><i class="fas fa-calendar-alt"></i> Mês</label>
+                            <div class="select-wrapper">
+                            <select name="mes">
+                                <option value="1" {% if mes_atual == 1 %}selected{% endif %}>Janeiro</option>
+                                <option value="2" {% if mes_atual == 2 %}selected{% endif %}>Fevereiro</option>
+                                <option value="3" {% if mes_atual == 3 %}selected{% endif %}>Março</option>
+                                <option value="4" {% if mes_atual == 4 %}selected{% endif %}>Abril</option>
+                                <option value="5" {% if mes_atual == 5 %}selected{% endif %}>Maio</option>
+                                <option value="6" {% if mes_atual == 6 %}selected{% endif %}>Junho</option>
+                                <option value="7" {% if mes_atual == 7 %}selected{% endif %}>Julho</option>
+                                <option value="8" {% if mes_atual == 8 %}selected{% endif %}>Agosto</option>
+                                <option value="9" {% if mes_atual == 9 %}selected{% endif %}>Setembro</option>
+                                <option value="10" {% if mes_atual == 10 %}selected{% endif %}>Outubro</option>
+                                <option value="11" {% if mes_atual == 11 %}selected{% endif %}>Novembro</option>
+                                <option value="12" {% if mes_atual == 12 %}selected{% endif %}>Dezembro</option>
+                            </select>
+                        </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label><i class="fas fa-calendar-week"></i> Ano</label>
+                            <div class="select-wrapper">
+                            <select name="ano">
+                                {% for ano in [2024, 2025, 2026] %}
+                                    <option value="{{ ano }}" {% if ano_atual == ano %}selected{% endif %}>{{ ano }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        </div>
+                        
+                        <div class="info-box">
+                            <i class="fas fa-chart-simple"></i>
+                            <strong>Dados de Demonstração</strong><br>
+                            Este protótipo apresenta dados fictícios de 3 ônibus com 6 ordens de serviço no mês de Março/2026.
+                        </div>
+                        
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-chart-line"></i> Gerar Relatório
+                        </button>
+                        <button type="submit" formaction="/download/pdf" class="btn btn-secondary">
+                            <i class="fas fa-file-pdf"></i> Baixar PDF
+                        </button>
+                    </div>
+                    
+                    </form>
+                    
+                    <div class="stats-preview">
+                        <h3>📊 Último mês (Março/2026)</h3>
+                        <div class="stat-items">
+                            <div class="stat-item">
+                                <div class="stat-number">R$ 8.775</div>
+                                <div class="stat-label">Faturamento</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">6</div>
+                                <div class="stat-label">OS Finalizadas</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">18</div>
+                                <div class="stat-label">Serviços</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

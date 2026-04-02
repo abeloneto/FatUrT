@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: maas-relatorio
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    plan: free
+```
+
+`Procfile` — alternativa ao render.yaml:
+```
+web: gunicorn app:app

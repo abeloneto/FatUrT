@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Faturamento - Consórcio BRT</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, helvetica;
+            background: linear-gradient(135deg, #eaedf0 0%, #eaedf0 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        :root {
+      --neu-bg: #e8e8ed;
+      --neu-shadow-light: #ffffff;
+      --neu-shadow-dark: #c5c5cc;
+      --neu-text: #83858f;
+      --neu-icon: #8e8ea0;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            max-width: 550px;
+            width: 100%;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: white;
+            cursor: pointer;
+        }
+        
+        select:focus {
+            outline: none;
+            border-color: #2a5298;
+            box-shadow: 0 0 0 3px rgba(42,82,152,0.1);
+        }
+        
+        .info-box {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            border-left: 4px solid #2a5298;
+        }
+        
+        .info-box p {
+            color: #666;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 22px;
+            border-radius: 50px;
+            border: none;
+            background: var(--neu-bg);
+            color: var(--neu-text);
+            font-size: 16px;
+            font-family: -apple-system, 'SF Pro Text', Helvetica;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 5px 5px 12px var(--neu-shadow-dark), -5px -5px 12px var(--neu-shadow-light);
+            transition: box-shadow 0.15s ease, transform 0.1s ease;
+
+        }
+        
+        .btn-primary:hover {
+            background: #6393fd;
+            color: white;
+            font-weight: bold;
+            transform: translateY(-2px);
+            box-shadow: 7px 7px 15px var(--neu-shadow-dark), -7px -7px 15px var(--neu-shadow-light);
+        }
+        
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 22px;
+            border-radius: 50px;
+            border: none;
+            background: var(--neu-bg);
+            color: var(--neu-text);
+            font-size: 16px;
+            font-family: -apple-system, 'SF Pro Text', Helvetica;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 5px 5px 12px var(--neu-shadow-dark), -5px -5px 12px var(--neu-shadow-light);
+            transition: box-shadow 0.15s ease, transform 0.1s ease;
+
+        }
+        
+        .btn-secondary:hover {
+            background: #6393fd;
+            color: white;
+            font-weight: bold;
+            transform: translateY(-2px);
+            box-shadow: 7px 7px 15px var(--neu-shadow-dark), -7px -7px 15px var(--neu-shadow-light);
+
+        }
+        
+        .stats-preview {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .stats-preview h3 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .stat-items {
+            display: flex;
+            justify-content: space-around;
+            gap: 15px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .stat-number {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2a5298;
+        }
+        
+        .stat-label {
+            font-size: 11px;
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                margin: 10px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .stat-items {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚍 Relatório de Faturamento</h1>
+            <p>Manutenção de Ônibus - Controle de Ordens de Serviço</p>
+        </div>
+        
+        <div class="content">
+            <form action="/relatorio" method="get">
+                <div class="form-group">
+                    <label><i class="fa-regular fa-calendar"></i> Selecione o Mês</label>
+                    <select name="mes">
+                        <option value="1" {% if mes_atual == 1 %}selected{% endif %}>Janeiro</option>
+                        <option value="2" {% if mes_atual == 2 %}selected{% endif %}>Fevereiro</option>
+                        <option value="3" {% if mes_atual == 3 %}selected{% endif %}>Março</option>
+                        <option value="4" {% if mes_atual == 4 %}selected{% endif %}>Abril</option>
+                        <option value="5" {% if mes_atual == 5 %}selected{% endif %}>Maio</option>
+                        <option value="6" {% if mes_atual == 6 %}selected{% endif %}>Junho</option>
+                        <option value="7" {% if mes_atual == 7 %}selected{% endif %}>Julho</option>
+                        <option value="8" {% if mes_atual == 8 %}selected{% endif %}>Agosto</option>
+                        <option value="9" {% if mes_atual == 9 %}selected{% endif %}>Setembro</option>
+                        <option value="10" {% if mes_atual == 10 %}selected{% endif %}>Outubro</option>
+                        <option value="11" {% if mes_atual == 11 %}selected{% endif %}>Novembro</option>
+                        <option value="12" {% if mes_atual == 12 %}selected{% endif %}>Dezembro</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fa-regular fa-calendar-minus"></i> Selecione o Ano</label>
+                    <select name="ano">
+                        {% for ano in [2024, 2025, 2026] %}
+                            <option value="{{ ano }}" {% if ano_atual == ano %}selected{% endif %}>{{ ano }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="info-box">
+                    <p><i class="fa-solid fa-chart-column"></i> <strong>Demonstração</strong><br>
+                    Este é um protótipo com dados fictícios para apresentação.<br>
+                    Cenário atual: 3 ônibus, 6 ordens de serviço no mês de Março/2026.</p>
+                </div>
+                
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary"><i class="fa-regular fa-file-lines"></i> Visualizar Relatório</button>
+                    <button type="submit" formaction="/download/excel" class="btn btn-secondary"><i class="fa-solid fa-download"></i> Baixar Excel</button>
+                </div>
+            </form>
+            
+            <div class="stats-preview">
+                <h3><i class="fa-solid fa-chart-simple"></i> Cenário de Demonstração (Março/2026)</h3>
+                <div class="stat-items">
+                    <div class="stat-item">
+                        <div class="stat-number">3</div>
+                        <div class="stat-label">Ônibus</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">6</div>
+                        <div class="stat-label">Ordens de Serviço</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">18</div>
+                        <div class="stat-label">Serviços Realizados</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">R$ 8.775</div>
+                        <div class="stat-label">Faturamento</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

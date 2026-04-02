@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Faturamento - MAAS Serviços</title>
+    
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto','Segoe UI',  'Arial', sans-serif;
+            background: #f5f5f5;
+            color: #1a1a1a;
+            border-right: 1px solid #e8eef5;
+        }
+
+        :root {
+      --neu-bg: #ebedf6;
+      --neu-shadow-light: #ffffff;
+      --neu-shadow-dark: #c5c5cc;
+      --neu-text: #83858f;
+      --neu-icon: #8e8ea0;
+        }
+        
+        /* ============================================
+           HEADER FIXO
+        ============================================ */
+        .top-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            z-index: 1000;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo-area img {
+            height: 40px;
+            width: auto;
+            gap: 10px;
+        }
+        
+        .logo-text h1 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #24b374;
+            margin-left: 30px;
+        }
+        
+        .logo-text p {
+            font-size: 11px;
+            color: #666;
+            margin-left: 30px;
+        }
+
+        .Linha {
+        border-left: 2px solid #55b98f;
+        height: 50px;
+        margin: 0 20px;
+            }
+        
+        /* ============================================
+           CONTEÚDO PRINCIPAL
+        ============================================ */
+        .main-content {
+            padding-top: 90px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-left: 24px;
+            padding-right: 24px;
+            padding-bottom: 40px;
+        }
+        
+        /* Barra de controle (seleção de mês) */
+        .control-bar {
+            background: white;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+.select-wrapper {
+            position: relative;
+            display: inline-block;
+            }
+.select-wrapper select {
+            appearance: none;
+            -webkit-appearance: none;
+            background: #ebedf6;
+            color: #3fb271;
+            font-weight: bold;
+            font-size: 14px;
+            font-family: -apple-system,'roboto' ,'SF Pro Text', sans-serif;
+            font-weight: 1600;
+            padding: 10px 40px 10px 16px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            outline: none;
+            min-width: 100px;
+            box-shadow: inset 0px 2px 4px var(--neu-shadow-dark), inset 0px -2px 4px var(--neu-shadow-light);
+        }
+        
+        .select-wrapper::after {
+
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 34px;
+            background: #ffffff;
+            border-radius: 0 50px 50px 0;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-color: #3fb271;
+
+}
+        
+        .filter-group {
+            display: relative;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 13px;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 22px;
+            border-radius: 50px;
+            border: none;
+            background: var(--neu-bg);
+            color: var(--neu-text);
+            font-size: 16px;
+            font-family: -apple-system, 'SF Pro Text', Helvetica;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: inset 0px 2px 4px var(--neu-shadow-dark), inset 0px -2px 4px var(--neu-shadow-light);
+            transition: box-shadow 0.15s ease, transform 0.1s ease;
+
+        }
+        
+        .btn-primary:hover {
+            background: #3fb271;
+            color: white;
+            font-weight: bold;
+            transform: translateY(-2px);
+            box-shadow:  7px 7px 15px var(--neu-shadow-dark),  -7px -7px 15px var(--neu-shadow-light);
+        }
+        
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 22px;
+            border-radius: 50px;
+            border: none;
+            background: var(--neu-bg);
+            color: var(--neu-text);
+            font-size: 16px;
+            font-family: -apple-system, 'SF Pro Text', Helvetica;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: inset 0px 2px 4px var(--neu-shadow-dark), inset -0px -2px 4px var(--neu-shadow-light);
+            transition: box-shadow 0.15s ease, transform 0.1s ease;
+
+        }
+        
+        .btn-secondary:hover {
+            background: #3fb271;
+            color: white;
+            font-weight: bold;
+            transform: translateY(-2px);
+            box-shadow: 7px 7px 15px var(--neu-shadow-dark), -7px -7px 15px var(--neu-shadow-light);
+
+        }
+        
+        /* ============================================
+           ESTILOS DO RELATÓRIO
+        ============================================ */
+        
+        /* Cabeçalho do relatório */
+        .report-header {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #24b374;
+        }
+        
+        .report-header .company-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #103a48;
+            margin-bottom: 5px;
+        }
+        
+        .report-header .report-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+            margin: 15px 0 5px;
+        }
+        
+        .report-header .report-period {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .report-header .report-date {
+            font-size: 11px;
+            color: #999;
+        }
+        
+        /* Tabela */
+        .section {
+            margin-top: 20px;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #103a48;
+            border-left: 4px solid #103a48;
+            padding-left: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .table-wrapper {
+  border: 2px solid #3fb271;
+  border-radius: 16px;
+  overflow: hidden;
+  font-family: -apple-system, sans-serif;
+  background: #fff;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        
+        th {
+  background: #3fb271;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 12px;
+            
+        }
+        tr:last-child td {
+    border-bottom: none;
+    border-right: 1px solid #e8eef5;
+}
+        
+        td {
+
+            padding: 10px 12px;
+            vertical-align: top;
+            border-right: 2px solid #e8eef5;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .valor {
+            font-weight: 600;
+            text-align: right;
+            
+        }
+        
+        .total-row {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .total-row td {
+            border-top: 2px solid #ccc;
+        }
+        
+        /* Rodapé */
+        .report-footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 10px;
+            color: #888;
+            text-align: center;
+        }
+        
+        /* Mensagem vazia */
+        .empty-message {
+            text-align: center;
+            padding: 60px;
+            color: #888;
+            border: 1px solid #e0e0e0;
+            background: #fefefe;
+            border-radius: 8px;
+        }
+        
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #666;
+        }
+        
+        /* ============================================
+           ESTILOS PARA IMPRESSÃO
+        ============================================ */
+        @media print {
+  .top-header,
+  .control-bar,
+  .btn-group,
+  .btn {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+    padding: 0;
+    margin: 0;
+    font-family: -apple-system, sans-serif;
+  }
+
+  /* container limpo */
+  .table-wrapper {
+    border: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  /* título da seção */
+  .section-title {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+    color: #000 !important;
+    border-left: 3px solid #000 !important;
+    padding-left: 8px !important;
+    margin-bottom: 12px !important;
+  }
+
+  /* cabeçalho da tabela */
+  table thead tr {
+    background: none !important;
+    border-top: 2px solid #000 !important;
+    border-bottom: 2px solid #000 !important;
+  }
+
+  table thead th {
+    color: #000 !important;
+    font-size: 9px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.06em !important;
+    padding: 8px 10px !important;
+    border: none !important;
+    background: none !important;
+  }
+
+  /* linhas do corpo */
+  table tbody tr {
+    border-bottom: 0.5px solid #ccc !important;
+  }
+
+  table tbody td {
+    border: none !important;
+    padding: 8px 10px !important;
+    color: #000 !important;
+    font-size: 11px !important;
+    vertical-align: top !important;
+  }
+
+  /* coluna valor */
+  table tbody td:last-child,
+  table tfoot td:last-child {
+    font-weight: 700 !important;
+    text-align: right !important;
+  }
+
+  /* rodapé total */
+  table tfoot tr {
+    border-top: 2px solid #000 !important;
+  }
+
+  table tfoot td {
+    padding: 8px 10px !important;
+    font-size: 11px !important;
+    color: #000 !important;
+    border: none !important;
+  }
+
+  .section {
+    border-radius: 0 !important;
+  }
+}
+        
+        
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .main-content {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+            
+            .control-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-group {
+                justify-content: center;
+            }
+            
+            .btn-group {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER FIXO -->
+    <header class="top-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <img src="{{ url_for('static', filename='3.png') }}" alt="Logo">
+                <div class="Linha"></div> 
+                <img src="{{ url_for('static', filename='brt.png') }}" alt="Logo">
+                <div class="logo-text">
+                    <h1>Faturamento - Consórcio do Sistema Metropolitano – BRT </h1>
+                    <p>MAAS Serviços</p>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="main-content">
+        <!-- Barra de controle -->
+        <div class="control-bar">
+            <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="select-wrapper">
+                <label><i class="fas fa-calendar-alt"></i> Período:</label>
+                <select id="select-mes" onchange="carregarRelatorio()">
+                    <option value="1">Janeiro</option>
+                    <option value="2">Fevereiro</option>
+                    <option value="3" selected>Março</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Maio</option>
+                    <option value="6">Junho</option>
+                    <option value="7">Julho</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Setembro</option>
+                    <option value="10">Outubro</option>
+                    <option value="11">Novembro</option>
+                    <option value="12">Dezembro</option>
+                </select>
+                </div>
+                <div class="form-group">
+                <div class="select-wrapper">
+                <select id="select-ano" onchange="carregarRelatorio()">
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                    <option value="2026" selected>2026</option>
+                </select>
+                </div>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="carregarRelatorio()">
+                    <i class="fas fa-chart-line"></i> Atualizar
+                </button>
+                <button class="btn btn-secondary" onclick="window.print()">
+                    <i class="fas fa-file-pdf"></i> Gerar PDF
+                </button>
+            </div>
+        </div>
+        </div>
+        
+        <!-- Área do relatório -->
+        <div id="relatorio-area">
+            <div class="loading">
+                <i class="fas fa-spinner fa-spin"></i> Carregando...
+            </div>
+        </div>
+    </main>
+
+    <script>
+function carregarRelatorio() {
+  const mes = document.getElementById('select-mes').value;
+  const ano = document.getElementById('select-ano').value;
+  const area = document.getElementById('relatorio-area');
+
+  area.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>';
+
+  fetch(`/api/relatorio?mes=${mes}&ano=${ano}`)
+    .then(r => r.json())
+    .then(data => {
+      console.log('Resposta:', data);
+
+      if (!data.success || !data.ordens || data.ordens.length === 0) {
+        area.innerHTML = '<div class="empty-message">Nenhuma ordem encontrada para o período.</div>';
+        return;
+      }
+
+      // ── 1. CAPA ──────────────────────────────────────────
+      const resumoExec = data.resumo_executivo;
+      const totalFixo = resumoExec
+        .filter(i => typeof i['Valor (R$)'] === 'number')
+        .reduce((acc, i) => acc + i['Valor (R$)'], 0);
+
+      let htmlCapa = '';
+      for (const item of resumoExec) {
+        const valor = item['Valor (R$)'];
+        const valorFormatado = valor === null
+          ? '<span style="color:#f0a500; font-style:italic;">⏳ Pendente API</span>'
+          : `R$ ${formatarMoeda(valor)}`;
+
+        htmlCapa += `
+          <tr>
+            <td><strong>${item['Item']}</strong></td>
+            <td style="color:#555;">${item['Descrição']}</td>
+            <td class="text-right">${valorFormatado}</td>
+          </tr>`;
+      }
+
+      htmlCapa += `
+        <tr class="total-row" style="background:#d4edda;">
+          <td colspan="2"><strong>TOTAL FATURAMENTO</strong></td>
+          <td class="text-right">
+            <strong>R$ ${formatarMoeda(totalFixo)}</strong>
+            <div style="font-size:10px; color:#888; font-weight:400;">+ valores pendentes</div>
+          </td>
+        </tr>`;
+
+      const htmlCapaBloco = `
+        <div class="section" style="margin-bottom: 32px;">
+          <div class="section-title">Resumo Executivo da Fatura</div>
+          <div style="display:flex; gap:16px; margin-bottom:20px; flex-wrap:wrap;">
+
+            <div style="flex:1; min-width:180px; background:#f0f9f4; border-radius:12px; padding:16px 20px; border-left:4px solid #3fb271;">
+              <div style="font-size:11px; color:#555; text-transform:uppercase; letter-spacing:0.06em;">Fixo Mensal</div>
+              <div style="font-size:22px; font-weight:700; color:#103a48; margin-top:4px;">R$ ${formatarMoeda(818496.00 + 8000.00)}</div>
+            </div>
+
+            <div style="flex:1; min-width:180px; background:#fff8e1; border-radius:12px; padding:16px 20px; border-left:4px solid #f0a500;">
+              <div style="font-size:11px; color:#555; text-transform:uppercase; letter-spacing:0.06em;">Serviços Extraordinários</div>
+              <div style="font-size:22px; font-weight:700; color:#103a48; margin-top:4px;">R$ ${formatarMoeda(data.resumo.total_faturamento)}</div>
+            </div>
+
+            <div style="flex:1; min-width:180px; background:#fef0f0; border-radius:12px; padding:16px 20px; border-left:4px solid #e05555;">
+              <div style="font-size:11px; color:#555; text-transform:uppercase; letter-spacing:0.06em;">Peças e Componentes</div>
+              <div style="font-size:16px; font-weight:600; color:#e05555; margin-top:4px; font-style:italic;">⏳ Pendente API</div>
+            </div>
+
+            <div style="flex:1; min-width:180px; background:#eef4ff; border-radius:12px; padding:16px 20px; border-left:4px solid #4a90d9;">
+              <div style="font-size:11px; color:#555; text-transform:uppercase; letter-spacing:0.06em;">Total de OS no período</div>
+              <div style="font-size:22px; font-weight:700; color:#103a48; margin-top:4px;">${data.resumo.total_os}</div>
+            </div>
+
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Descrição</th>
+                  <th class="text-right">Valor (R$)</th>
+                </tr>
+              </thead>
+              <tbody>${htmlCapa}</tbody>
+            </table>
+          </div>
+
+          <div style="margin-top:12px; font-size:11px; color:#888; text-align:right;">
+            Período: ${data.periodo.inicio.split('-').reverse().join('/')} a ${data.periodo.fim.split('-').reverse().join('/')}
+            &nbsp;|&nbsp; Gerado em: ${data.data_geracao}
+            &nbsp;|&nbsp; Contrato: ${data.contrato}
+          </div>
+        </div>`;
+
+      // ── 2. DETALHAMENTO DAS OS ────────────────────────────
+      const modelos = data.modelos;
+      const periodo = data.periodo;
+      let linhas = '';
+
+      linhas += `
+        <tr style="background:#f0f9f4;">
+          <td colspan="6" style="padding:8px 12px; font-size:12px; color:#555;">
+            <strong>Contrato: 001/2025 - Consórcio do Sistema Metropolitano – BRT</strong> &nbsp;|&nbsp;
+            Período: ${periodo.inicio.split('-').reverse().join('/')} a ${periodo.fim.split('-').reverse().join('/')}
+          </td>
+        </tr>`;
+
+      for (const [modelo, prefixos] of Object.entries(modelos)) {
+        let totalModelo = 0;
+
+        linhas += `
+          <tr style="background:#f8fffe;">
+            <td colspan="6" style="padding:6px 12px; font-size:11px; color:#333; border-top:1px solid #ddd;">
+              <strong>Modelo:</strong> ${modelo}
+            </td>
+          </tr>`;
+
+        for (const [prefixo, ordens] of Object.entries(prefixos)) {
+          const v = ordens[0];
+
+          linhas += `
+            <tr style="background:#f8fffe;">
+              <td colspan="6" style="padding:6px 12px; font-size:11px; color:#333;">
+                <strong>Prefixo: ${prefixo}</strong> &nbsp;&nbsp;
+                Placa: ${v.placa} &nbsp;&nbsp;
+                Hodômetro: ${v.km_atual ?? '-'}
+              </td>
+            </tr>
+            <tr style="background:#eee; font-size:11px; font-weight:600; text-transform:uppercase;">
+              <td>Início</td><td>Final</td><td>Tipo</td>
+              <td>Descrição</td><td>Nº OS</td>
+              <td class="text-right">Valor</td>
+            </tr>`;
+
+          let totalPrefixo = 0;
+          for (const os of ordens) {
+            totalPrefixo += os.valor_total || 0;
+            linhas += `
+              <tr>
+                <td>${os.data_abertura}</td>
+                <td>${os.data_fechamento}</td>
+                <td>${os.tarefas}</td>
+                <td>${os.defeito_relatado}</td>
+                <td>${os.numero_os}</td>
+                <td class="text-right">R$ ${formatarMoeda(os.valor_total)}</td>
+              </tr>`;
+          }
+
+          linhas += `
+            <tr class="total-row">
+              <td colspan="5"><strong>Total</strong></td>
+              <td class="text-right"><strong>R$ ${formatarMoeda(totalPrefixo)}</strong></td>
+            </tr>`;
+
+          totalModelo += totalPrefixo;
+        }
+
+        linhas += `
+          <tr class="total-row" style="background:#e8f5ee;">
+            <td colspan="5"><strong>Total por Modelo</strong></td>
+            <td class="text-right"><strong>R$ ${formatarMoeda(totalModelo)}</strong></td>
+          </tr>`;
+      }
+
+      // ── 3. CUSTOS OPERACIONAIS ────────────────────────────
+      let htmlCustos = '';
+      const custos = data.custos_operacionais;
+
+      for (const cat of custos.categorias) {
+        htmlCustos += `
+          <tr style="background:#f0f9f4;">
+            <td colspan="4" style="padding:8px 12px; font-weight:700; font-size:12px; color:#103a48;">
+              ${cat.titulo}
+            </td>
+          </tr>`;
+
+        for (const item of cat.itens) {
+          htmlCustos += `
+            <tr>
+              <td>${item['Subitem'] || item['subitem']}</td>
+              <td>${item['Descrição']}</td>
+              <td style="text-align:center">${(item['% estimado'] * 100).toFixed(0)}%</td>
+              <td class="text-right">R$ ${formatarMoeda(item['Valor (R$)'])}</td>
+            </tr>`;
+        }
+
+        htmlCustos += `
+          <tr class="total-row">
+            <td colspan="3"><strong>Subtotal ${cat.titulo}</strong></td>
+            <td class="text-right"><strong>R$ ${formatarMoeda(cat.subtotal)}</strong></td>
+          </tr>`;
+      }
+
+      htmlCustos += `
+        <tr class="total-row" style="background:#d4edda;">
+          <td colspan="2"><strong>TOTAL CUSTOS OPERACIONAIS</strong></td>
+          <td style="text-align:center"><strong>91%</strong></td>
+          <td class="text-right"><strong>R$ ${formatarMoeda(custos.total_geral)}</strong></td>
+        </tr>
+        <tr style="background:#fff8e1;">
+          <td colspan="4" style="font-size:11px; color:#555; padding:8px 12px;">
+            <strong>Diferença (9%):</strong> margem operacional, riscos, impostos indiretos e contingências.
+          </td>
+        </tr>`;
+
+      // ── 4. MONTA TUDO ─────────────────────────────────────
+      area.innerHTML = htmlCapaBloco + `
+
+        <div class="section">
+          <div class="section-title">Detalhamento das Ordens de Serviço</div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Início</th><th>Final</th><th>Tipo</th>
+                  <th>Descrição</th><th>Nº OS</th>
+                  <th class="text-right">Valor (R$)</th>
+                </tr>
+              </thead>
+              <tbody>${linhas}</tbody>
+              <tfoot>
+                <tr class="total-row">
+                  <td colspan="5" style="text-align:right; font-weight:600;">TOTAL GERAL</td>
+                  <td class="valor">R$ ${formatarMoeda(data.resumo.total_faturamento)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <div class="section" style="margin-top:32px;">
+          <div class="section-title">Quadro de Composição Operacional</div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Subitem</th><th>Descrição</th>
+                  <th style="text-align:center">% Estimado</th>
+                  <th class="text-right">Valor (R$)</th>
+                </tr>
+              </thead>
+              <tbody>${htmlCustos}</tbody>
+            </table>
+          </div>
+        </div>`;
+    })
+    .catch(err => {
+      console.error('Erro:', err);
+      area.innerHTML = '<div class="empty-message">Erro ao carregar os dados.</div>';
+    });
+}
+
+function formatarMoeda(v) {
+  return Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+}
+
+document.addEventListener('DOMContentLoaded', carregarRelatorio);
+    </script>
+</body>
+</html>

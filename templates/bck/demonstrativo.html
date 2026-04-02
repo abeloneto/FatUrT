@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demonstrativo de Faturamento - {{ nome_mes }}/{{ ano }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Seus estilos aqui */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f5f7fa;
+            padding: 24px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        /* Seção de cada item do relatório */
+        .section {
+            background: white;
+            border-radius: 16px;
+            margin-bottom: 32px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .section-header {
+            background: #f8fafc;
+            padding: 20px 24px;
+            border-bottom: 2px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .section-header i {
+            font-size: 24px;
+            color: #0f172a;
+        }
+        
+        .section-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+            color: #1e293b;
+        }
+        
+        .section-content {
+            padding: 24px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #475569;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .valor {
+            font-weight: 600;
+            color: #0f172a;
+        }
+        
+        .total-row {
+            background: #f1f5f9;
+            font-weight: 700;
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .section {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ========================================= -->
+        <!-- 1. CAPA - RESUMO FINANCEIRO -->
+        <!-- ========================================= -->
+        <div class="section">
+            <div class="section-header">
+                <i class="fas fa-chart-line"></i>
+                <h2>1. Resumo Financeiro</h2>
+            </div>
+            <div class="section-content">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px;">
+                    <div style="background: #f1f5f9; padding: 20px; border-radius: 12px;">
+                        <div style="color: #64748b; font-size: 14px;">Receita Total</div>
+                        <div style="font-size: 28px; font-weight: 700; color: #10b981;">R$ {{ "{:,.2f}".format(resumo.total_faturamento).replace(',', '.') }}</div>
+                    </div>
+                    <div style="background: #f1f5f9; padding: 20px; border-radius: 12px;">
+                        <div style="color: #64748b; font-size: 14px;">Total de OS</div>
+                        <div style="font-size: 28px; font-weight: 700;">{{ resumo.total_os }}</div>
+                    </div>
+                    <div style="background: #f1f5f9; padding: 20px; border-radius: 12px;">
+                        <div style="color: #64748b; font-size: 14px;">Ticket Médio</div>
+                        <div style="font-size: 28px; font-weight: 700;">R$ {{ "{:,.2f}".format(resumo.ticket_medio).replace(',', '.') }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ========================================= -->
+        <!-- 2. RELATÓRIO TÉCNICO POR VEÍCULO -->
+        <!-- ========================================= -->
+        <div class="section">
+            <div class="section-header">
+                <i class="fas fa-bus"></i>
+                <h2>2. Relatório Técnico por Veículo</h2>
+            </div>
+            <div class="section-content">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Prefixo</th>
+                            <th>Placa</th>
+                            <th>Modelo</th>
+                            <th>Cliente</th>
+                            <th class="text-right">Qtd OS</th>
+                            <th class="text-right">Total Serviços</th>
+                            <th class="text-right">Valor Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set veiculos_dict = {} %}
+                        {% for ordem in ordens %}
+                            {% if ordem.status == 'FINALIZADO' %}
+                                {% set key = ordem.veiculo_prefixo %}
+                                {% if veiculos_dict.update({key: {
+                                    'placa': ordem.veiculo_placa,
+                                    'modelo': ordem.veiculo_modelo,
+                                    'cliente': ordem.cliente_nome,
+                                    'qtd_os': veiculos_dict.get(key, {}).get('qtd_os', 0) + 1,
+                                    'total_servicos': veiculos_dict.get(key, {}).get('total_servicos', 0) + ordem.qtd_servicos,
+                                    'valor_total': veiculos_dict.get(key, {}).get('valor_total', 0) + ordem.valor_total
+                                }) %}{% endif %}
+                            {% endif %}
+                        {% endfor %}
+                        {% for prefixo, dados in veiculos_dict.items() %}
+                        <tr>
+                            <td><strong>{{ prefixo }}</strong></td>
+                            <td>{{ dados.placa }}</td>
+                            <td>{{ dados.modelo }}</td>
+                            <td>{{ dados.cliente }}</td>
+                            <td class="text-right">{{ dados.qtd_os }}</td>
+                            <td class="text-right">{{ dados.total_servicos }}</td>
+                            <td class="text-right valor">R$ {{ "{:,.2f}".format(dados.valor_total).replace(',', '.') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- ========================================= -->
+        <!-- 3. DEMONSTRATIVO DE SERVIÇOS EXECUTADOS -->
+        <!-- ========================================= -->
+        <div class="section">
+            <div class="section-header">
+                <i class="fas fa-tools"></i>
+                <h2>3. Demonstrativo de Serviços Executados</h2>
+            </div>
+            <div class="section-content">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>OS</th>
+                            <th>Data Conclusão</th>
+                            <th>Veículo</th>
+                            <th>Serviços Realizados</th>
+                            <th class="text-right">Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ordem in ordens %}
+                            {% if ordem.status == 'FINALIZADO' %}
+                            <tr>
+                                <td><strong>{{ ordem.numero_os }}</strong></td>
+                                <td>{{ ordem.data_conclusao }}</td>
+                                <td>{{ ordem.veiculo_prefixo }} - {{ ordem.veiculo_placa }}</td>
+                                <td>{{ ordem.descricao_servicos }}</td>
+                                <td class="text-right valor">R$ {{ "{:,.2f}".format(ordem.valor_total).replace(',', '.') }}</td>
+                            </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- ========================================= -->
+        <!-- 4. QUADRO DE COMPOSIÇÃO OPERACIONAL -->
+        <!-- ========================================= -->
+        <div class="section">
+            <div class="section-header">
+                <i class="fas fa-chart-pie"></i>
+                <h2>4. Quadro de Composição Operacional</h2>
+            </div>
+            <div class="section-content">
+                
+                <!-- 4.1 INFRAESTRUTURA -->
+                <h3 style="margin: 0 0 16px 0; color: #334155;">
+                    <i class="fas fa-building"></i> 4.1 Infraestrutura
+                </h3>
+                <table style="margin-bottom: 24px;">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Descrição</th>
+                            <th class="text-right">Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in dados_infra %}
+                        <tr>
+                            <td>{{ item.codigo }}</td>
+                            <td>{{ item.descricao }}</td>
+                            <td class="text-right valor">R$ {{ "{:,.2f}".format(item.valor).replace(',', '.') }}</td>
+                        </tr>
+                        {% endfor %}
+                        <tr class="total-row">
+                            <td colspan="2"><strong>Total Infraestrutura</strong></td>
+                            <td class="text-right"><strong>R$ {{ "{:,.2f}".format(dados_infra_total).replace(',', '.') }}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <!-- 4.2 PESSOAL TÉCNICO ESPECIALIZADO -->
+                <h3 style="margin: 24px 0 16px 0; color: #334155;">
+                    <i class="fas fa-users"></i> 4.2 Pessoal Técnico Especializado
+                </h3>
+                <table style="margin-bottom: 24px;">
+                    <thead>
+                        <tr>
+                            <th>Cargo</th>
+                            <th>Qtd</th>
+                            <th class="text-right">Salário Base</th>
+                            <th class="text-right">Encargos (62%)</th>
+                            <th class="text-right">Total Mensal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cargo in dados_pessoal %}
+                        <tr>
+                            <td>{{ cargo.nome }}</td>
+                            <td class="text-right">{{ cargo.quantidade }}</td>
+                            <td class="text-right">R$ {{ "{:,.2f}".format(cargo.salario_base).replace(',', '.') }}</td>
+                            <td class="text-right">R$ {{ "{:,.2f}".format(cargo.encargos).replace(',', '.') }}</td>
+                            <td class="text-right valor">R$ {{ "{:,.2f}".format(cargo.total).replace(',', '.') }}</td>
+                        </tr>
+                        {% endfor %}
+                        <tr class="total-row">
+                            <td colspan="4"><strong>Total Pessoal Técnico</strong></td>
+                            <td class="text-right"><strong>R$ {{ "{:,.2f}".format(dados_pessoal_total).replace(',', '.') }}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <!-- 4.3 MAQUINÁRIO E EQUIPAMENTOS -->
+                <h3 style="margin: 24px 0 16px 0; color: #334155;">
+                    <i class="fas fa-industry"></i> 4.3 Maquinário e Equipamentos
+                </h3>
+                <table style="margin-bottom: 24px;">
+                    <thead>
+                        <tr>
+                            <th>Equipamento</th>
+                            <th>Qtd</th>
+                            <th class="text-right">Depreciação Mensal</th>
+                            <th class="text-right">Manutenção Mensal</th>
+                            <th class="text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for equip in dados_maquinario %}
+                        <tr>
+                            <td>{{ equip.nome }}</td>
+                            <td class="text-right">{{ equip.quantidade }}</td>
+                            <td class="text-right">R$ {{ "{:,.2f}".format(equip.depreciacao).replace(',', '.') }}</td>
+                            <td class="text-right">R$ {{ "{:,.2f}".format(equip.manutencao).replace(',', '.') }}</td>
+                            <td class="text-right valor">R$ {{ "{:,.2f}".format(equip.total).replace(',', '.') }}</td>
+                        </tr>
+                        {% endfor %}
+                        <tr class="total-row">
+                            <td colspan="4"><strong>Total Maquinário</strong></td>
+                            <td class="text-right"><strong>R$ {{ "{:,.2f}".format(dados_maquinario_total).replace(',', '.') }}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <!-- 4.4 FERRAMENTARIA -->
+                <h3 style="margin: 24px 0 16px 0; color: #334155;">
+                    <i class="fas fa-toolbox"></i> 4.4 Ferramentaria
+                </h3>
+                <table style="margin-bottom: 24px;">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Descrição</th>
+                            <th class="text-right">Valor Mensal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in dados_ferramentaria %}
+                        <tr>
+                            <td>{{ item.codigo }}</td>
+                            <td>{{ item.descricao }}</td>
+                            <td class="text-right valor">R$ {{ "{:,.2f}".format(item.valor).replace(',', '.') }}</td>
+                        </tr>
+                        {% endfor %}
+                        <tr class="total-row">
+                            <td colspan="2"><strong>Total Ferramentaria</strong></td>
+                            <td class="text-right"><strong>R$ {{ "{:,.2f}".format(dados_ferramentaria_total).replace(',', '.') }}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <!-- 4.5 MÃO DE OBRA VOLANTE -->
+                <h3 style="margin: 24px 0 16px 0; color: #334155;">
+                    <i class="fas fa-user-clock"></i> 4.5 Mão de Obra Volante
+                </h3>
+                <table style="margin-bottom: 24px;">
+                    <thead>
+                        <tr>
+                            <th>Especialidade</th>
+                            <th class="text-right">Horas Trabalhadas</th>
+                            <th class="text-right">Valor/Hora</th>
+                            <th class="text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in dados_volante %}
+                        <tr>
+                            <td>{{ item.especialidade }}</td>
+                            <td class="text-right">{{ item.horas }}</td>
+                            <td class="text-right">R$ {{ "{:,.2f}".format(item.valor_hora).replace(',', '.') }}</td>
+                            <td class="text-right valor">R$ {{ "{:,.2f}".format(item.total).replace(',', '.') }}</td>
+                        </tr>
+                        {% endfor %}
+                        <tr class="total-row">
+                            <td colspan="3"><strong>Total Mão de Obra Volante</strong></td>
+                            <td class="text-right"><strong>R$ {{ "{:,.2f}".format(dados_volante_total).replace(',', '.') }}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <!-- 4.6 GESTÃO DE CHAMADOS -->
+                <h3 style="margin: 24px 0 16px 0; color: #334155;">
+                    <i class="fas fa-headset"></i> 4.6 Gestão de Chamados
+                </h3>
+                <table style="margin-bottom: 24px;">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Descrição</th>
+                            <th class="text-right">Valor Mensal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in dados_gestao %}
+                        <tr>
+                            <td>{{ item.codigo }}</td>
+                            <td>{{ item.descricao }}</td>
+                            <td class="text-right valor">R$ {{ "{:,.2f}".format(item.valor).replace(',', '.') }}</td>
+                        </tr>
+                        {% endfor %}
+                        <tr class="total-row">
+                            <td colspan="2"><strong>Total Gestão de Chamados</strong></td>
+                            <td class="text-right"><strong>R$ {{ "{:,.2f}".format(dados_gestao_total).replace(',', '.') }}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <!-- RESUMO DOS CUSTOS OPERACIONAIS -->
+                <div style="margin-top: 32px; padding: 20px; background: #f1f5f9; border-radius: 12px;">
+                    <h3 style="margin: 0 0 16px 0;">Resumo dos Custos Operacionais</h3>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                        <div>Infraestrutura:</div>
+                        <div class="text-right valor">R$ {{ "{:,.2f}".format(dados_infra_total).replace(',', '.') }}</div>
+                        <div>Pessoal Técnico:</div>
+                        <div class="text-right valor">R$ {{ "{:,.2f}".format(dados_pessoal_total).replace(',', '.') }}</div>
+                        <div>Maquinário:</div>
+                        <div class="text-right valor">R$ {{ "{:,.2f}".format(dados_maquinario_total).replace(',', '.') }}</div>
+                        <div>Ferramentaria:</div>
+                        <div class="text-right valor">R$ {{ "{:,.2f}".format(dados_ferramentaria_total).replace(',', '.') }}</div>
+                        <div>Mão de Obra Volante:</div>
+                        <div class="text-right valor">R$ {{ "{:,.2f}".format(dados_volante_total).replace(',', '.') }}</div>
+                        <div>Gestão de Chamados:</div>
+                        <div class="text-right valor">R$ {{ "{:,.2f}".format(dados_gestao_total).replace(',', '.') }}</div>
+                        <div style="border-top: 2px solid #cbd5e1; margin-top: 8px; padding-top: 8px; font-weight: 700;">TOTAL CUSTOS OPERACIONAIS:</div>
+                        <div class="text-right" style="border-top: 2px solid #cbd5e1; margin-top: 8px; padding-top: 8px; font-weight: 700;">R$ {{ "{:,.2f}".format(total_custos_operacionais).replace(',', '.') }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ========================================= -->
+        <!-- 5. RELATÓRIO DE PEÇAS (EM DESENVOLVIMENTO) -->
+        <!-- ========================================= -->
+        <div class="section">
+            <div class="section-header">
+                <i class="fas fa-cogs"></i>
+                <h2>5. Relatório de Peças</h2>
+            </div>
+            <div class="section-content">
+                <div style="text-align: center; padding: 40px; color: #94a3b8;">
+                    <i class="fas fa-database" style="font-size: 48px; margin-bottom: 16px; display: block;"></i>
+                    <p>Em desenvolvimento - Aguardando integração com API de estoque</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ========================================= -->
+        <!-- 6. EVIDÊNCIAS (ORDENS DE SERVIÇO) -->
+        <!-- ========================================= -->
+        <div class="section">
+            <div class="section-header">
+                <i class="fas fa-file-alt"></i>
+                <h2>6. Evidências - Ordens de Serviço</h2>
+            </div>
+            <div class="section-content">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nº OS</th>
+                            <th>Data</th>
+                            <th>Cliente</th>
+                            <th>Veículo</th>
+                            <th>Serviços</th>
+                            <th class="text-right">Valor</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ordem in ordens %}
+                        <tr>
+                            <td><strong>{{ ordem.numero_os }}</strong></td>
+                            <td>{{ ordem.data_conclusao }}</td>
+                            <td>{{ ordem.cliente_nome }}</td>
+                            <td>{{ ordem.veiculo_prefixo }} - {{ ordem.veiculo_placa }}</td>
+                            <td>{{ ordem.descricao_servicos[:60] }}{% if ordem.descricao_servicos|length > 60 %}...{% endif %}</td>
+                            <td class="text-right valor">R$ {{ "{:,.2f}".format(ordem.valor_total).replace(',', '.') }}</td>
+                            <td>
+                                <span style="background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 12px; font-size: 12px;">
+                                    <i class="fas fa-check-circle"></i> {{ ordem.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Rodapé -->
+        <div style="text-align: center; padding: 24px; color: #94a3b8; font-size: 12px; border-top: 1px solid #e2e8f0; margin-top: 32px;">
+            <i class="fas fa-chart-line"></i> Documento gerado automaticamente pelo Sistema MAAS<br>
+            Demonstrativo de Faturamento - {{ nome_mes }}/{{ ano }} | Gerado em {{ data_geracao }}
+        </div>
+    </div>
+</body>
+</html>

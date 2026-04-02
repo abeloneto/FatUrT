@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Faturamento - MAAS Serviços</title>
+    
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+            background: #f5f5f5;
+            color: #1a1a1a;
+        }
+        
+        /* ============================================
+           HEADER FIXO
+        ============================================ */
+        .top-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            z-index: 1000;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-area img {
+            height: 40px;
+            width: auto;
+        }
+        
+        .logo-text h1 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e3c72;
+            margin: 0;
+        }
+        
+        .logo-text p {
+            font-size: 11px;
+            color: #666;
+            margin: 0;
+        }
+        
+        /* ============================================
+           CONTEÚDO PRINCIPAL
+        ============================================ */
+        .main-content {
+            padding-top: 70px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-left: 24px;
+            padding-right: 24px;
+            padding-bottom: 40px;
+        }
+        
+        /* Barra de controle (seleção de mês) */
+        .control-bar {
+            background: white;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 13px;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #1e3c72;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0f2b4f;
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            border: 1px solid #ccc;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        /* ============================================
+           ESTILOS DO RELATÓRIO
+        ============================================ */
+        
+        /* Cabeçalho do relatório */
+        .report-header {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #1e3c72;
+        }
+        
+        .report-header .company-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1e3c72;
+            margin-bottom: 5px;
+        }
+        
+        .report-header .report-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+            margin: 15px 0 5px;
+        }
+        
+        .report-header .report-period {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .report-header .report-date {
+            font-size: 11px;
+            color: #999;
+        }
+        
+        /* Tabela */
+        .section {
+            margin-top: 20px;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e3c72;
+            border-left: 4px solid #1e3c72;
+            padding-left: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .table-wrapper {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        
+        th {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        td {
+            border: 1px solid #e0e0e0;
+            padding: 10px 12px;
+            vertical-align: top;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .valor {
+            font-weight: 600;
+            text-align: right;
+        }
+        
+        .total-row {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .total-row td {
+            border-top: 2px solid #ccc;
+        }
+        
+        /* Rodapé */
+        .report-footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 10px;
+            color: #888;
+            text-align: center;
+        }
+        
+        /* Mensagem vazia */
+        .empty-message {
+            text-align: center;
+            padding: 60px;
+            color: #888;
+            border: 1px solid #e0e0e0;
+            background: #fefefe;
+            border-radius: 8px;
+        }
+        
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #666;
+        }
+        
+        /* ============================================
+           ESTILOS PARA IMPRESSÃO
+        ============================================ */
+        @media print {
+            /* Esconde controles */
+            .top-header,
+            .control-bar,
+            .btn-group,
+            .btn {
+                display: none !important;
+            }
+            
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .main-content {
+                padding-top: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                max-width: 100%;
+            }
+            
+            .section {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+            
+            table {
+                break-inside: auto;
+            }
+            
+            tr {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+            
+            @page {
+                size: A4;
+                margin: 2cm;
+            }
+        }
+        
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .main-content {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+            
+            .control-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-group {
+                justify-content: center;
+            }
+            
+            .btn-group {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER FIXO -->
+    <header class="top-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <img src="{{ url_for('static', filename='3.png') }}" alt="Logo">
+                <div class="logo-text">
+                    <h1>MAAS Serviços</h1>
+                    <p>Sistema de Gestão</p>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="main-content">
+        <!-- Barra de controle -->
+        <div class="control-bar">
+            <div class="filter-group">
+                <label><i class="fas fa-calendar-alt"></i> Período:</label>
+                <select id="select-mes">
+                    <option value="1">Janeiro</option>
+                    <option value="2">Fevereiro</option>
+                    <option value="3" selected>Março</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Maio</option>
+                    <option value="6">Junho</option>
+                    <option value="7">Julho</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Setembro</option>
+                    <option value="10">Outubro</option>
+                    <option value="11">Novembro</option>
+                    <option value="12">Dezembro</option>
+                </select>
+                <select id="select-ano">
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                    <option value="2026" selected>2026</option>
+                </select>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="carregarRelatorio()">
+                    <i class="fas fa-chart-line"></i> Atualizar
+                </button>
+                <button class="btn btn-secondary" onclick="window.print()">
+                    <i class="fas fa-file-pdf"></i> Gerar PDF
+                </button>
+            </div>
+        </div>
+        
+        <!-- Área do relatório -->
+        <div id="relatorio-area">
+            <div class="loading">
+                <i class="fas fa-spinner fa-spin"></i> Carregando...
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function carregarRelatorio() {
+            var mes = document.getElementById('select-mes').value;
+            var ano = document.getElementById('select-ano').value;
+            
+            // Mostrar loading
+            document.getElementById('relatorio-area').innerHTML = `
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i> Carregando relatório...
+                </div>
+            `;
+            
+            // Buscar dados via API
+            fetch(`/api/relatorio?mes=${mes}&ano=${ano}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        renderizarRelatorio(data);
+                    } else {
+                        document.getElementById('relatorio-area').innerHTML = `
+                            <div class="empty-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <p>Erro ao carregar dados: ${data.error}</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('relatorio-area').innerHTML = `
+                        <div class="empty-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <p>Erro ao carregar relatório: ${error}</p>
+                        </div>
+                    `;
+                });
+        }
+        
+        function renderizarRelatorio(data) {
+            var ordens = data.ordens;
+            var resumo = data.resumo;
+            var nome_mes = data.nome_mes;
+            var ano = data.ano;
+            var data_geracao = data.data_geracao;
+            
+            if (ordens.length === 0) {
+                document.getElementById('relatorio-area').innerHTML = `
+                    <div class="empty-message">
+                        <i class="fas fa-clipboard-list"></i>
+                        <p>Nenhuma ordem de serviço encontrada para ${nome_mes}/${ano}.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Gerar linhas da tabela
+            var linhasTabela = '';
+            for (var i = 0; i < ordens.length; i++) {
+                var o = ordens[i];
+                linhasTabela += `
+                    <tr>
+                        <td><strong>${o.numero_os}</strong></td>
+                        <td>${o.data_conclusao}</td>
+                        <td>${o.cliente_nome}</td>
+                        <td>${o.veiculo_prefixo} - ${o.veiculo_placa}</td>
+                        <td>${o.descricao_servicos}</td>
+                        <td class="valor">R$ ${formatarMoeda(o.valor_total)}</td>
+                    </tr>
+                `;
+            }
+            
+            // Montar HTML do relatório
+            var html = `
+                <div class="report-container">
+                    <div class="report-header">
+                        <div class="company-name">MAAS SERVIÇOS</div>
+                        <div class="report-title">Relatório de Faturamento</div>
+                        <div class="report-period">Período: ${nome_mes} de ${ano}</div>
+                        <div class="report-date">Emissão: ${data_geracao}</div>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">Detalhamento das Ordens de Serviço</div>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Nº OS</th>
+                                        <th>Data Conclusão</th>
+                                        <th>Cliente</th>
+                                        <th>Veículo</th>
+                                        <th>Serviços Realizados</th>
+                                        <th class="text-right">Valor (R$)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${linhasTabela}
+                                </tbody>
+                                <tfoot>
+                                    <tr class="total-row">
+                                        <td colspan="5" style="text-align: right; font-weight: 600;">TOTAL GERAL</td>
+                                        <td class="valor" style="font-weight: 700;">R$ ${formatarMoeda(resumo.total_faturamento)}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="report-footer">
+                        <p>Documento gerado eletronicamente - MAAS Serviços</p>
+                        <p>Relatório de faturamento referente a ${nome_mes}/${ano}</p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('relatorio-area').innerHTML = html;
+        }
+        
+        function formatarMoeda(valor) {
+            return valor.toFixed(2).replace('.', ',');
+        }
+        
+        // Carregar relatório inicial (Março/2026)
+        carregarRelatorio();
+    </script>
+</body>
+</html>
