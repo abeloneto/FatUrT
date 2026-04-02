@@ -660,70 +660,71 @@ function carregarRelatorio() {
       const periodo = data.periodo;
       let linhas = '';
 
-      linhas += `
-        <tr style="background:#f0f9f4;">
-          <td colspan="6" style="padding:8px 12px; font-size:12px; color:#555;">
-            <strong>Contrato: 001/2025 - Consórcio do Sistema Metropolitano – BRT</strong> &nbsp;|&nbsp;
-            Período: ${periodo.inicio.split('-').reverse().join('/')} a ${periodo.fim.split('-').reverse().join('/')}
-          </td>
-        </tr>`;
+      // linha do contrato fixo
+linhas += `
+  <tr style="background:#f0f9f4;">
+    <td colspan="8" style="padding:8px 12px; font-size:12px; color:#555;">
+      <strong>Contrato: 001/2025 - Consórcio do Sistema Metropolitano – BRT</strong> &nbsp;|&nbsp;
+      Período: ${periodo.inicio.split('-').reverse().join('/')} a ${periodo.fim.split('-').reverse().join('/')}
+    </td>
+  </tr>`;
 
-      for (const [modelo, prefixos] of Object.entries(modelos)) {
-        let totalModelo = 0;
+// agrupa por prefixo no JavaScript
+const porPrefixo = {};
+for (const [modelo, prefixos] of Object.entries(modelos)) {
+  for (const [prefixo, ordens] of Object.entries(prefixos)) {
+    porPrefixo[prefixo] = { modelo, ordens };
+  }
+}
 
-        linhas += `
-          <tr style="background:#f8fffe;">
-            <td colspan="6" style="padding:6px 12px; font-size:11px; color:#333; border-top:1px solid #ddd;">
-              <strong>Modelo:</strong> ${modelo}
-            </td>
-          </tr>`;
+for (const [prefixo, dados] of Object.entries(porPrefixo)) {
+  const { modelo, ordens } = dados;
+  const v = ordens[0];
 
-        for (const [prefixo, ordens] of Object.entries(prefixos)) {
-          const v = ordens[0];
+  linhas += `
+    <tr style="background:#f8fffe;">
+      <td colspan="8" style="padding:8px 12px; font-size:11px; color:#333; border-top:1px solid #ddd;">
+        <strong>Prefixo: ${prefixo}</strong> &nbsp;&nbsp;
+        Placa: ${v.placa} &nbsp;&nbsp;
+        Modelo: ${modelo} &nbsp;&nbsp;
+        Hodômetro: ${v.km_atual ?? '-'}
+      </td>
+    </tr>`;
 
-          linhas += `
-            <tr style="background:#f8fffe;">
-              <td colspan="6" style="padding:6px 12px; font-size:11px; color:#333;">
-                <strong>Prefixo: ${prefixo}</strong> &nbsp;&nbsp;
-                Placa: ${v.placa} &nbsp;&nbsp;
-                Hodômetro: ${v.km_atual ?? '-'}
-              </td>
-            </tr>
-            <tr style="background:#eee; font-size:11px; font-weight:600; text-transform:uppercase;">
-              <td>Início</td><td>Final</td><td>Tipo</td>
-              <td>Descrição</td><td>Nº OS</td>
-              <td class="text-right">Valor</td>
-            </tr>`;
+  let totalPrefixo = 0;
+  for (const os of ordens) {
+    totalPrefixo += os.valor_total || 0;
 
-          let totalPrefixo = 0;
-          for (const os of ordens) {
-            totalPrefixo += os.valor_total || 0;
-            linhas += `
-              <tr>
-                <td>${os.data_abertura}</td>
-                <td>${os.data_fechamento}</td>
-                <td>${os.tarefas}</td>
-                <td>${os.defeito_relatado}</td>
-                <td>${os.numero_os}</td>
-                <td class="text-right">R$ ${formatarMoeda(os.valor_total)}</td>
-              </tr>`;
-          }
+    const danoBadge = os.is_dano_severo
+      ? '<span style="background:#fde8e8; color:#c0392b; font-size:10px; padding:2px 6px; border-radius:50px; font-weight:600;">⚠ Sim</span>'
+      : '<span style="background:#e8f5ee; color:#27ae60; font-size:10px; padding:2px 6px; border-radius:50px;">Não</span>';
 
-          linhas += `
-            <tr class="total-row">
-              <td colspan="5"><strong>Total</strong></td>
-              <td class="text-right"><strong>R$ ${formatarMoeda(totalPrefixo)}</strong></td>
-            </tr>`;
+    let insumoHtml = '-';
+    if (os.insumos && os.insumos.length > 0) {
+      insumoHtml = os.insumos.map(i =>
+        `${i.descricao} (Qtd: ${i.quantidade}) — R$ ${formatarMoeda(i.valor_total)}`
+      ).join('<br>');
+    }
 
-          totalModelo += totalPrefixo;
-        }
+    linhas += `
+      <tr>
+        <td>${os.data_abertura}</td>
+        <td>${os.data_fechamento}</td>
+        <td>${os.tarefas}</td>
+        <td>${os.descricao}</td>
+        <td>${os.numero_os}</td>
+        <td style="text-align:center">${danoBadge}</td>
+        <td style="font-size:11px">${insumoHtml}</td>
+        <td class="text-right">R$ ${formatarMoeda(os.valor_total)}</td>
+      </tr>`;
+  }
 
-        linhas += `
-          <tr class="total-row" style="background:#e8f5ee;">
-            <td colspan="5"><strong>Total por Modelo</strong></td>
-            <td class="text-right"><strong>R$ ${formatarMoeda(totalModelo)}</strong></td>
-          </tr>`;
-      }
+  linhas += `
+    <tr class="total-row">
+      <td colspan="7"><strong>Total Prefixo ${prefixo}</strong></td>
+      <td class="text-right"><strong>R$ ${formatarMoeda(totalPrefixo)}</strong></td>
+    </tr>`;
+}
 
       // ── 3. CUSTOS OPERACIONAIS ────────────────────────────
       let htmlCustos = '';
@@ -775,15 +776,20 @@ function carregarRelatorio() {
             <table>
               <thead>
                 <tr>
-                  <th>Início</th><th>Final</th><th>Tipo</th>
-                  <th>Descrição</th><th>Nº OS</th>
+                  <th>Início</th>
+                  <th>Final</th>
+                  <th>Tipo</th>
+                  <th>Descrição</th>
+                  <th>Nº OS</th>
+                  <th style="text-align:center">Dano Severo</th>
+                  <th>Insumos</th>
                   <th class="text-right">Valor (R$)</th>
                 </tr>
               </thead>
               <tbody>${linhas}</tbody>
               <tfoot>
                 <tr class="total-row">
-                  <td colspan="5" style="text-align:right; font-weight:600;">TOTAL GERAL</td>
+                  <td colspan="7" style="text-align:right; font-weight:600;">TOTAL GERAL</td>
                   <td class="valor">R$ ${formatarMoeda(data.resumo.total_faturamento)}</td>
                 </tr>
               </tfoot>
