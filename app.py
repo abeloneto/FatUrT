@@ -183,12 +183,10 @@ def buscar_supabase(tabela, filtros=""):
     return r.json() if r.status_code == 200 else []
 
 def obter_dados(mes, ano):
-    # primeiro e último dia do mês corretamente
     primeiro_dia = f"{ano}-{mes:02d}-01"
     ultimo_dia_num = calendar.monthrange(ano, mes)[1]
     ultimo_dia = f"{ano}-{mes:02d}-{ultimo_dia_num}"
 
-    # filtra pelo data_fechamento
     ordens_raw = buscar_supabase(
         "Ordens_Servico",
         f"&status=eq.FECHADA&data_fechamento=gte.{primeiro_dia}T00:00:00&data_fechamento=lte.{ultimo_dia}T23:59:59"
@@ -198,6 +196,10 @@ def obter_dados(mes, ano):
 
     encaminhamentos_raw = buscar_supabase("OS_Encaminhamentos")
     frota_raw = buscar_supabase("View_Frota_Completa")
+    apoio_raw = buscar_supabase("Apoio_Etapas")  # novo
+
+    # índice de apoio por codigo_etapa
+    apoio_por_codigo = {a['codigo_etapa']: a['descricao'] for a in apoio_raw}
 
     enc_por_os = {}
     for e in encaminhamentos_raw:
@@ -214,11 +216,26 @@ def obter_dados(mes, ano):
         encaminhamentos = enc_por_os.get(num_os, [])
 
         tarefas = list(set(e['tarefa'] for e in encaminhamentos if e.get('tarefa')))
-        valor_total = sum(
-            float(e['valor_servico_externo'] or 0)
-            for e in encaminhamentos
-            if e.get('valor_servico_externo')
-        )
+
+        # descrição via Apoio_Etapas
+        descricoes = []
+        for e in encaminhamentos:
+            codigo = e.get('codigo_etapa')
+            desc = apoio_por_codigo.get(codigo, e.get('encaminhamento_descricao', '-'))
+            if desc and desc not in descricoes:
+                descricoes.append(desc)
+
+        # insumos
+        insumos = []
+        valor_total = 0
+        for e in encaminhamentos:
+            if e.get('insumo_descricao'):
+                insumos.append({
+                    "descricao": e['insumo_descricao'],
+                    "quantidade": e.get('insumo_quantidade') or 0,
+                    "valor_total": float(e.get('insumo_valor_total') or 0)
+                })
+                valor_total += float(e.get('insumo_valor_total') or 0)
 
         ordens.append({
             "numero_os": num_os,
@@ -230,11 +247,13 @@ def obter_dados(mes, ano):
             "familia": veiculo.get('familia', '-'),
             "km_atual": os.get('km_atual', '-'),
             "tarefas": ", ".join(tarefas) if tarefas else '-',
+            "descricao": " | ".join(descricoes) if descricoes else os.get('defeito_relatado', '-'),
             "defeito_relatado": os.get('defeito_relatado', '-'),
+            "is_dano_severo": os.get('is_dano_severo', False),  # novo
+            "insumos": insumos,                                  # novo
             "valor_total": valor_total,
         })
 
-    # agrupa por modelo → prefixo (contrato fixo 001/2025)
     modelos = {}
     for o in ordens:
         m = o['modelo']
@@ -242,7 +261,6 @@ def obter_dados(mes, ano):
         modelos.setdefault(m, {}).setdefault(p, []).append(o)
 
     return {
-        "resumo_executivo": Resumo_executivo,
         "ordens": ordens,
         "modelos": modelos,
         "periodo": {
