@@ -29,6 +29,13 @@
       --neu-text: #83858f;
       --neu-icon: #8e8ea0;
         }
+        /* css do peças */
+                .mode-bar {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 8px;
+          margin-top: 16px;
+        }
         
         /* ============================================
            HEADER FIXO
@@ -244,7 +251,29 @@
             box-shadow: 7px 7px 15px var(--neu-shadow-dark), -7px -7px 15px var(--neu-shadow-light);
 
         }
+
+        /* controle de peças */
         
+        .btn-modo {
+  padding: 10px 20px;
+  border-radius: 50px;
+  border: none;
+  background: var(--neu-bg);
+  color: var(--neu-text);
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: inset 0px 2px 4px var(--neu-shadow-dark), inset 0px -2px 4px var(--neu-shadow-light);
+  transition: all 0.2s;
+}
+
+.btn-modo.ativo {
+  background: #3fb271;
+  color: white;
+  box-shadow: 2px 2px 4px var(--neu-shadow-dark), -2px -2px 4px var(--neu-shadow-light);
+}
+/* controle fim de peças */
+
         /* ============================================
            ESTILOS DO RELATÓRIO
         ============================================ */
@@ -511,8 +540,27 @@
     
     <!-- CONTEÚDO PRINCIPAL -->
     <main class="main-content">
+      <div class="mode-bar">
+  <button class="btn-modo ativo" id="btn-manutencao" onclick="alternarModo('manutencao')">
+    <i class="fas fa-wrench"></i> Manutenção
+  </button>
+  <button class="btn-modo" id="btn-pecas" onclick="alternarModo('pecas')">
+    <i class="fas fa-cogs"></i> Peças
+  </button>
+</div>
         <!-- Barra de controle -->
         <div class="control-bar">
+<!-- filtro de período — só aparece no modo peças -->
+<div id="filtro-periodo" style="display:none; align-items:center; gap:8px;">
+  <div class="select-wrapper">
+    <select id="select-periodo" onchange="carregarPecas()">
+      <option value="1">01 a 10</option>
+      <option value="2">11 a 20</option>
+      <option value="3">21 ao último dia</option>
+    </select>
+  </div>
+</div>
+          <!-- fim controle de peças -->
             <div style="display: flex; align-items: center; gap: 8px;">
             <div class="select-wrapper">
                 <label><i class="fas fa-calendar-alt"></i> Período:</label>
@@ -561,6 +609,21 @@
     </main>
 
     <script>
+      let modoAtual = 'manutencao';
+
+function alternarModo(modo) {
+  modoAtual = modo;
+
+  document.getElementById('btn-manutencao').classList.toggle('ativo', modo === 'manutencao');
+  document.getElementById('btn-pecas').classList.toggle('ativo', modo === 'pecas');
+  document.getElementById('filtro-periodo').style.display = modo === 'pecas' ? 'flex' : 'none';
+
+  if (modo === 'manutencao') {
+    carregarRelatorio();
+  } else {
+    carregarPecas();
+  }
+}
 function carregarRelatorio() {
   const mes = document.getElementById('select-mes').value;
   const ano = document.getElementById('select-ano').value;
@@ -654,7 +717,71 @@ function carregarRelatorio() {
             &nbsp;|&nbsp; Contrato: ${data.contrato}
           </div>
         </div>`;
+// controle de peças
 
+function carregarPecas() {
+  const mes = document.getElementById('select-mes').value;
+  const ano = document.getElementById('select-ano').value;
+  const selectPeriodo = document.getElementById('select-periodo');
+  const periodo = selectPeriodo ? selectPeriodo.value : '1';
+  const area = document.getElementById('relatorio-area');
+
+  area.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>';
+
+  fetch(`/api/pecas?mes=${mes}&ano=${ano}&periodo=${periodo}`)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.success || data.prefixos.length === 0) {
+        area.innerHTML = '<div class="empty-message">Nenhuma peça encontrada para o período.</div>';
+        return;
+      }
+
+      let linhas = '';
+
+      for (const prefixo of data.prefixos) {
+        linhas += `
+          <tr style="background:#f8fffe;">
+            <td colspan="5" style="padding:8px 12px; font-size:11px; color:#333; border-top:1px solid #ddd;">
+              <strong>Prefixo: ${prefixo.prefixo}</strong> &nbsp;&nbsp;
+              Placa: ${prefixo.placa} &nbsp;&nbsp;
+              Modelo: ${prefixo.modelo}
+            </td>
+          </tr>`;
+
+        for (const item of prefixo.itens) {
+          linhas += `
+            <tr>
+              <td>${item.data_fim}</td>
+              <td>${item.numero_os}</td>
+              <td>${item.descricao}</td>
+              <td style="text-align:center">${item.quantidade}</td>
+              <td class="text-right">R$ ${formatarMoeda(item.valor_total)}</td>
+            </tr>`;
+        }
+
+        linhas += `
+          <tr class="total-row">
+            <td colspan="4"><strong>Total Prefixo ${prefixo.prefixo}</strong></td>
+            <td class="text-right"><strong>R$ ${formatarMoeda(prefixo.subtotal)}</strong></td>
+          </tr>`;
+      }
+
+      area.innerHTML = `
+        <div class="section">
+          <div class="section-title">Faturamento de Peças</div>
+          <div style="margin-bottom:12px; font-size:12px; color:#555;">
+            Período: ${data.periodo.inicio.split('-').reverse().join('/')} a ${data.periodo.fim.split('-').reverse().join('/')}
+            &nbsp;|&nbsp; <strong>Data de faturamento: ${data.periodo.faturamento.split('-').reverse().join('/')}</strong>
+            &nbsp;|&nbsp; Gerado em: ${data.data_geracao}
+          </div>
+        </div>`;
+    })
+    .catch(err => {
+      console.error('Erro:', err);
+      area.innerHTML = '<div class="empty-message">Erro ao carregar os dados.</div>';
+    });
+}
+// fim peças
       // ── 2. DETALHAMENTO DAS OS ────────────────────────────
       const modelos = data.modelos;
       const periodo = data.periodo;

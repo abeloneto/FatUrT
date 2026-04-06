@@ -182,6 +182,7 @@ def buscar_supabase(tabela, filtros=""):
     r = requests.get(url, headers=HEADERS)
     return r.json() if r.status_code == 200 else []
 
+
 def obter_dados(mes, ano):
     primeiro_dia = f"{ano}-{mes:02d}-01"
     ultimo_dia_num = calendar.monthrange(ano, mes)[1]
@@ -283,11 +284,24 @@ def formatar_data(dt_str):
         return dt.strftime("%d/%m/%Y %H:%M")
     except:
         return dt_str
+    
 
 @app.route('/')
 def index():
     hoje = date.today()
-    return render_template('index.html', mes_atual=hoje.month, ano_atual=hoje.year)
+    return render_template('manutencao.html',
+                           mes_atual=hoje.month,
+                           ano_atual=hoje.year,
+                           pagina_ativa='manutencao')
+
+
+@app.route('/pecas')
+def pecas():
+    hoje = date.today()
+    return render_template('pecas.html',
+                           mes_atual=hoje.month,
+                           ano_atual=hoje.year,
+                           pagina_ativa='pecas')
 
 @app.route('/api/relatorio')
 def api_relatorio():
@@ -316,6 +330,103 @@ def api_relatorio():
         'nome_mes': MESES.get(mes, ''),
         'ano': ano,
         'contrato': '001/2025',
+        'data_geracao': datetime.now().strftime("%d/%m/%Y %H:%M")
+    })
+
+def calcular_periodo_pecas(periodo, mes, ano):
+    ultimo_dia_num = calendar.monthrange(ano, mes)[1]
+    if periodo == "1":
+        return f"{ano}-{mes:02d}-01", f"{ano}-{mes:02d}-10", f"{ano}-{mes:02d}-10"
+    elif periodo == "2":
+        return f"{ano}-{mes:02d}-11", f"{ano}-{mes:02d}-20", f"{ano}-{mes:02d}-20"
+    else:
+        return f"{ano}-{mes:02d}-21", f"{ano}-{mes:02d}-{ultimo_dia_num}", f"{ano}-{mes:02d}-{ultimo_dia_num}"
+
+@app.route('/api/pecas')
+@app.route('/api/pecas')
+def api_pecas():
+    mes = request.args.get('mes', type=int) or date.today().month
+    ano = request.args.get('ano', type=int) or date.today().year
+    periodo = request.args.get('periodo', '1')
+
+    data_inicio, data_fim, data_faturamento = calcular_periodo_pecas(periodo, mes, ano)
+
+    # ✅ Filtra OS FECHADAS no período correto
+    ordens_raw = buscar_supabase(
+        "Ordens_Servico",
+        f"&status=eq.FECHADA&data_fechamento=gte.{data_inicio}T00:00:00&data_fechamento=lte.{data_fim}T23:59:59"
+    )
+
+    if not ordens_raw:
+        return jsonify({
+            'success': True,
+            'prefixos': [],
+            'periodo': {
+                'inicio': data_inicio,
+                'fim': data_fim,
+                'faturamento': data_faturamento,
+                'label': {'1': '01 a 10', '2': '11 a 20', '3': '21 ao último dia'}.get(periodo, '')
+            },
+            'resumo': {'total_geral': 0, 'total_itens': 0},
+            'mes': mes, 'ano': ano,
+            'data_geracao': datetime.now().strftime("%d/%m/%Y %H:%M")
+        })
+
+    # Pega os números das OS encontradas para filtrar encaminhamentos
+    numeros_os = [str(o['numero_sequencial']) for o in ordens_raw]
+    ordens_por_num = {str(o['numero_sequencial']): o for o in ordens_raw}
+
+    # ✅ Busca encaminhamentos COM insumo apenas das OS do período
+    encaminhamentos_raw = buscar_supabase(
+        "OS_Encaminhamentos",
+        f"&numero_os_direto=in.({','.join(numeros_os)})&insumo_descricao=not.is.null"
+    )
+
+    frota_raw = buscar_supabase("View_Frota_Completa")
+    frota_por_prefixo = {str(v['prefixo']): v for v in frota_raw}
+
+    prefixos = {}
+    for e in encaminhamentos_raw:
+        num_os = str(e.get('numero_os_direto', ''))
+        os_dados = ordens_por_num.get(num_os, {})
+        prefixo = str(os_dados.get('prefixo_veiculo', '-'))
+        veiculo = frota_por_prefixo.get(prefixo, {})
+
+        prefixos.setdefault(prefixo, {
+            "prefixo": prefixo,
+            "placa": veiculo.get('placa', '-'),
+            "modelo": veiculo.get('modelo', '-'),
+            "itens": []
+        })
+
+        prefixos[prefixo]["itens"].append({
+            "numero_os": num_os,
+            "descricao": e.get('insumo_descricao', '-'),
+            "quantidade": e.get('insumo_quantidade') or 0,
+            "valor_total": float(e.get('insumo_valor_total') or 0),
+            "data_fim": formatar_data(os_dados.get('data_fechamento'))  # ✅ usa data da OS
+        })
+
+    total_geral = 0
+    for p in prefixos.values():
+        p['subtotal'] = sum(i['valor_total'] for i in p['itens'])
+        total_geral += p['subtotal']
+
+    return jsonify({
+        'success': True,
+        'prefixos': list(prefixos.values()),
+        'periodo': {
+            'inicio': data_inicio,
+            'fim': data_fim,
+            'faturamento': data_faturamento,
+            'label': {'1': '01 a 10', '2': '11 a 20', '3': '21 ao último dia'}.get(periodo, '')
+        },
+        'resumo': {
+            'total_geral': total_geral,
+            'total_itens': sum(len(p['itens']) for p in prefixos.values())
+        },
+        'mes': mes,
+        'ano': ano,
         'data_geracao': datetime.now().strftime("%d/%m/%Y %H:%M")
     })
 

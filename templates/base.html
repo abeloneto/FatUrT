@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MAAS Manutenção | MAAS Peças{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --neu-bg: #ebedf6;
+            --neu-shadow-light: #ffffff;
+            --neu-shadow-dark: #c5c5cc;
+            --neu-text: #83858f;
+            --verde: #3fb271;
+            --verde-escuro: #103a48;
+        }
+
+        body {
+            font-family: 'Roboto', 'Segoe UI', 'Arial', sans-serif;
+            background: #f5f5f5;
+            color: #1a1a1a;
+        }
+
+        /* ── HEADER ── */
+        .top-header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            background: white;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            z-index: 1000;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-area img { height: 40px; width: auto; }
+
+        .linha-divisor {
+            border-left: 2px solid #55b98f;
+            height: 50px;
+            margin: 0 20px;
+        }
+
+        .logo-text h1 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--verde);
+            margin-left: 30px;
+        }
+
+        .logo-text p {
+            font-size: 11px;
+            color: #666;
+            margin-left: 30px;
+        }
+
+        /* ── NAV ABAS ── */
+        .nav-abas {
+            display: flex;
+            gap: 4px;
+        }
+
+        .nav-aba {
+            padding: 8px 18px;
+            border-radius: 50px;
+            border: none;
+            background: var(--neu-bg);
+            color: var(--neu-text);
+            font-size: 13px;
+            font-family: inherit;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: inset 0px 2px 4px var(--neu-shadow-dark), inset 0px -2px 4px var(--neu-shadow-light);
+            transition: all 0.2s;
+        }
+
+        .nav-aba.ativo, .nav-aba:hover {
+            background: var(--verde);
+            color: white;
+            box-shadow: 2px 2px 4px var(--neu-shadow-dark), -2px -2px 4px var(--neu-shadow-light);
+        }
+
+        /* ── CONTEÚDO ── */
+        .main-content {
+            padding-top: 90px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-left: 24px;
+            padding-right: 24px;
+            padding-bottom: 40px;
+        }
+
+        /* ── CONTROL BAR ── */
+        .control-bar {
+            background: white;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        /* ── SELECTS ── */
+        .select-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .select-wrapper select {
+            appearance: none;
+            -webkit-appearance: none;
+            background: #ebedf6;
+            color: var(--verde);
+            font-weight: 600;
+            font-size: 14px;
+            font-family: inherit;
+            padding: 10px 40px 10px 16px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            outline: none;
+            min-width: 100px;
+            box-shadow: inset 0px 2px 4px var(--neu-shadow-dark), inset 0px -2px 4px var(--neu-shadow-light);
+        }
+
+        .select-wrapper::after {
+            content: '';
+            position: absolute;
+            right: 0; top: 0; bottom: 0;
+            width: 34px;
+            border-radius: 0 50px 50px 0;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-color: var(--verde);
+        }
+
+        /* ── BOTÕES ── */
+        .btn-group { display: flex; gap: 10px; }
+
+        .btn-primary, .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 50px;
+            border: none;
+            background: var(--neu-bg);
+            color: var(--neu-text);
+            font-size: 14px;
+            font-family: inherit;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: inset 0px 2px 4px var(--neu-shadow-dark), inset 0px -2px 4px var(--neu-shadow-light);
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover, .btn-secondary:hover {
+            background: var(--verde);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 4px 4px 8px var(--neu-shadow-dark), -4px -4px 8px var(--neu-shadow-light);
+        }
+
+        /* ── TABELAS ── */
+        .section { margin-top: 20px; }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--verde-escuro);
+            border-left: 4px solid var(--verde-escuro);
+            padding-left: 12px;
+            margin-bottom: 20px;
+        }
+
+        .table-wrapper {
+            border: 2px solid var(--verde);
+            border-radius: 16px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+
+        th {
+            background: var(--verde);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 12px;
+        }
+
+        td {
+            padding: 10px 12px;
+            vertical-align: top;
+            border-right: 1px solid #e8eef5;
+        }
+
+        tr:last-child td { border-bottom: none; }
+
+        .text-right { text-align: right; }
+        .valor { font-weight: 600; text-align: right; }
+
+        .total-row { background: #f8f9fa; font-weight: 600; }
+        .total-row td { border-top: 2px solid #ccc; }
+
+        /* ── ESTADOS ── */
+        .empty-message {
+            text-align: center;
+            padding: 60px;
+            color: #888;
+            border: 1px solid #e0e0e0;
+            background: #fefefe;
+            border-radius: 8px;
+        }
+
+        .loading { text-align: center; padding: 60px; color: #666; }
+
+        /* ── IMPRESSÃO ── */
+        @media print {
+            .no-print    { display: none !important; }
+            .top-header, .control-bar, .btn-group, .nav-abas { display: none !important; }
+
+            body { background: white; padding: 0; margin: 0; }
+
+            .table-wrapper {
+                border: none !important;
+                border-radius: 0 !important;
+                overflow: visible !important;
+                box-shadow: none !important;
+            }
+
+            .section-title {
+                font-size: 13px !important;
+                font-weight: 700 !important;
+                text-transform: uppercase !important;
+                color: #000 !important;
+                border-left: 3px solid #000 !important;
+                padding-left: 8px !important;
+                margin-bottom: 12px !important;
+            }
+
+            table thead tr {
+                background: none !important;
+                border-top: 2px solid #000 !important;
+                border-bottom: 2px solid #000 !important;
+            }
+
+            table thead th {
+                color: #000 !important;
+                font-size: 9px !important;
+                font-weight: 700 !important;
+                padding: 8px 10px !important;
+                border: none !important;
+                background: none !important;
+            }
+
+            table tbody tr { border-bottom: 0.5px solid #ccc !important; }
+
+            table tbody td {
+                border: none !important;
+                padding: 8px 10px !important;
+                color: #000 !important;
+                font-size: 11px !important;
+            }
+
+            table tbody td:last-child,
+            table tfoot td:last-child {
+                font-weight: 700 !important;
+                text-align: right !important;
+            }
+
+            table tfoot tr { border-top: 2px solid #000 !important; }
+            table tfoot td { padding: 8px 10px !important; font-size: 11px !important; color: #000 !important; border: none !important; }
+            .section { border-radius: 0 !important; }
+            .main-content { padding-top: 0 !important; }
+        }
+
+        /* ── RESPONSIVO ── */
+        @media (max-width: 768px) {
+            .main-content { padding-left: 16px; padding-right: 16px; }
+            .control-bar { flex-direction: column; align-items: stretch; }
+            .btn-group { justify-content: center; }
+        }
+    </style>
+    {% block extra_style %}{% endblock %}
+</head>
+<body>
+    <header class="top-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <img src="{{ url_for('static', filename='3.png') }}" alt="Logo">
+                <div class="linha-divisor"></div>
+                <img src="{{ url_for('static', filename='brt.png') }}" alt="Logo">
+                <div class="logo-text">
+                    <h1>Faturamento - Consórcio do Sistema Metropolitano – BRT</h1>
+                </div>
+            </div>
+            <nav class="nav-abas">
+                <a href="/" class="nav-aba {% if pagina_ativa == 'manutencao' %}ativo{% endif %}">
+                    <i class="fas fa-wrench"></i> MAAS Manutenção
+                </a>
+                <a href="/pecas" class="nav-aba {% if pagina_ativa == 'pecas' %}ativo{% endif %}">
+                    <i class="fas fa-cogs"></i> MAAS Peças
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-content">
+        {% block conteudo %}{% endblock %}
+    </main>
+
+    <script>
+        function formatarMoeda(v) {
+            return Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
