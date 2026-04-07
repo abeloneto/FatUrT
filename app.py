@@ -316,7 +316,7 @@ def api_relatorio():
             if i["Item"] == "Serviços extraordinários":
                 i["Valor (R$)"] = dados['resumo']['total_faturamento']
             elif i["Item"] == "Peças e componentes":
-                i["Valor (R$)"] = None  # ainda aguardando API
+                i["Valor (R$)"] = dados['resumo']['total_faturamento']  # ainda aguardando API
             resumo_executivo.append(i)
 
     return jsonify({
@@ -423,7 +423,7 @@ def api_pecas():
         },
         'resumo': {
             'total_geral': total_geral,
-            'total_itens': sum(len(p['itens']) for p in prefixos.values())
+            'total_itens': sum(i['quantidade'] for p in prefixos.values() for i in p['itens'])
         },
         'mes': mes,
         'ano': ano,
