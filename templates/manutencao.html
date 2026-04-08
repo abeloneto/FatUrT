@@ -169,7 +169,7 @@ function carregarRelatorio() {
                     let insumoHtml = '-';
                     if (os.insumos && os.insumos.length > 0) {
                         insumoHtml = os.insumos.map(i =>
-                            `${i.descricao} (Qtd: ${i.quantidade}) — R$ ${formatarMoeda(i.valor_total)}`
+                            `${i.descricao} (Qtd: ${i.quantidade}) `
                         ).join('<br>');
                     }
 
