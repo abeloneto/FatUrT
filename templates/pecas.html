@@ -90,17 +90,9 @@ function carregarPecas() {
                             <td>${item.numero_os}</td>
                             <td>${item.descricao}</td>
                             <td style="text-align:center">${item.quantidade}</td>
-                            <td class="text-right">R$ ${formatarMoeda(item.valor_total)}</td>
                         </tr>`;
                 }
 
-                linhas += `
-                    <tr class="total-row">
-                        <td colspan="4"><strong>Total Prefixo ${prefixo.prefixo}</strong></td>
-                        <td class="text-right"><strong>R$ ${formatarMoeda(prefixo.subtotal)}</strong></td>
-                    </tr>`;
-
-                totalGeral += prefixo.subtotal;
             }
 
             area.innerHTML = `
@@ -142,16 +134,9 @@ function carregarPecas() {
                                     <th>Nº OS</th>
                                     <th>Peça</th>
                                     <th style="text-align:center">Qtd</th>
-                                    <th class="text-right">Valor (R$)</th>
                                 </tr>
                             </thead>
                             <tbody>${linhas}</tbody>
-                            <tfoot>
-                                <tr class="total-row">
-                                    <td colspan="4" style="text-align:right; font-weight:600;">TOTAL GERAL</td>
-                                    <td class="valor">R$ ${formatarMoeda(totalGeral)}</td>
-                                </tr>
-                            </tfoot>
                         </table>
                     </div>
 

@@ -182,15 +182,8 @@ function carregarRelatorio() {
                             <td>${os.numero_os}</td>
                             <td style="text-align:center">${danoBadge}</td>
                             <td style="font-size:11px">${insumoHtml}</td>
-                            <td class="text-right">R$ ${formatarMoeda(os.valor_total)}</td>
                         </tr>`;
                 }
-
-                linhas += `
-                    <tr class="total-row">
-                        <td colspan="7"><strong>Total Prefixo ${prefixo}</strong></td>
-                        <td class="text-right"><strong>R$ ${formatarMoeda(totalPrefixo)}</strong></td>
-                    </tr>`;
             }
 
             // ── CUSTOS OPERACIONAIS ──
@@ -242,16 +235,10 @@ function carregarRelatorio() {
                                 <tr>
                                     <th>Início</th><th>Final</th><th>Tipo</th><th>Descrição</th>
                                     <th>Nº OS</th><th style="text-align:center">Dano Severo</th>
-                                    <th>Insumos</th><th class="text-right">Valor (R$)</th>
+                                    <th>Insumos</th>
                                 </tr>
                             </thead>
                             <tbody>${linhas}</tbody>
-                            <tfoot>
-                                <tr class="total-row">
-                                    <td colspan="7" style="text-align:right; font-weight:600;">TOTAL GERAL</td>
-                                    <td class="valor">R$ ${formatarMoeda(data.resumo.total_faturamento)}</td>
-                                </tr>
-                            </tfoot>
                         </table>
                     </div>
                 </div>
