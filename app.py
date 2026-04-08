@@ -233,7 +233,7 @@ def obter_dados(mes, ano):
             if e.get('insumo_descricao'):
                 insumos.append({
                     "descricao": e['insumo_descricao'],
-                    "quantidade": e.get('insumo_quantidade') or 0,
+                    "quantidade": int(e.get('insumo_quantidade') or 0),
                     "valor_total": float(e.get('insumo_valor_total') or 0)
                 })
                 valor_total += float(e.get('insumo_valor_total') or 0)
@@ -423,7 +423,7 @@ def api_pecas():
         },
         'resumo': {
             'total_geral': total_geral,
-            'total_itens': sum(i['quantidade'] for p in prefixos.values() for i in p['itens'])
+            'total_itens': sum(float(i['quantidade'] or 0) for p in prefixos.values() for i in p['itens'])
         },
         'mes': mes,
         'ano': ano,
