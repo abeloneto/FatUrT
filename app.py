@@ -343,7 +343,6 @@ def calcular_periodo_pecas(periodo, mes, ano):
         return f"{ano}-{mes:02d}-21", f"{ano}-{mes:02d}-{ultimo_dia_num}", f"{ano}-{mes:02d}-{ultimo_dia_num}"
 
 @app.route('/api/pecas')
-@app.route('/api/pecas')
 def api_pecas():
     mes = request.args.get('mes', type=int) or date.today().month
     ano = request.args.get('ano', type=int) or date.today().year
