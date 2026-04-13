@@ -157,6 +157,96 @@ gestao_chamados = [
     }
 ]
 
+#tabela de notas fiscasis
+
+notas_fiscais = [
+    {
+        "NF": "000000005",
+        "Valor": 4539.98,
+        "OS": 17
+    },
+    {
+        "NF": "000000004",
+        "Valor": 624.00,
+        "OS": 30
+    },
+    {
+        "NF": "000000003",
+        "Valor": 624.00,
+        "OS": 36
+    },
+    {
+        "NF": "000000010",
+        "Valor": 936.00,
+        "OS": 59
+    },
+    {
+        "NF": "000000007",
+        "Valor": 624.00,
+        "OS": 72
+    },
+    {
+        "NF": "000000015",
+        "Valor": 624.00,
+        "OS": 73
+    },
+    {
+        "NF": "000000011",
+        "Valor": 624.00,
+        "OS": 74
+    },
+    {
+        "NF": "000000008",
+        "Valor": 624.00,
+        "OS": 75
+    },
+    {
+        "NF": "000000009",
+        "Valor": 624.00,
+        "OS": 76
+    },
+    {
+        "NF": "000000012",
+        "Valor": 624.00,
+        "OS": 77
+    },
+    {
+        "NF": "000000014",
+        "Valor": 624.00,
+        "OS": 78
+    },
+    {
+        "NF": "000000017",
+        "Valor": 4539.98,
+        "OS": 80
+    },
+    {
+        "NF": "000000006",
+        "Valor": 319.60,
+        "OS": 82
+    },
+    {
+        "NF": "000000016",
+        "Valor": 9079.97,
+        "OS": 79
+    },
+    {
+        "NF": "000000018",
+        "Valor": 409.6,
+        "OS": 81
+    },
+    {
+        "NF": "000000019",
+        "Valor": 624.00,
+        "OS": 83
+    },
+    {
+        "NF": "000000020",
+        "Valor": 90,
+        "OS": 84
+    }
+]
+
 def obter_custos_operacionais():
     categorias = [
         {"titulo": "Infraestrutura da Oficina", "itens": Infra},
@@ -398,18 +488,31 @@ def api_pecas():
             "itens": []
         })
 
+        nf_dados = next((nf for nf in notas_fiscais if str(nf['OS']) == num_os), None)
+
         prefixos[prefixo]["itens"].append({
             "numero_os": num_os,
             "descricao": e.get('insumo_descricao', '-'),
             "quantidade": e.get('insumo_quantidade') or 0,
             "valor_total": float(e.get('insumo_valor_total') or 0),
-            "data_fim": formatar_data(os_dados.get('data_fechamento'))  # ✅ usa data da OS
+            "data_fim": formatar_data(os_dados.get('data_fechamento')),
+            "numero_nf": nf_dados['NF'] if nf_dados else '-',
+            "valor_nf": float(nf_dados['Valor']) if nf_dados else None
         })
 
-    total_geral = 0
-    for p in prefixos.values():
-        p['subtotal'] = sum(i['valor_total'] for i in p['itens'])
-        total_geral += p['subtotal']
+        total_geral = 0
+        for p in prefixos.values():
+            os_vistas = set()
+            subtotal = 0
+            for i in p['itens']:
+                num_os = i['numero_os']
+                if num_os not in os_vistas:
+                    os_vistas.add(num_os)
+                    if i['valor_nf'] is not None:
+                        subtotal += i['valor_nf']
+                    # Se não tem NF, não soma nada
+            p['subtotal'] = subtotal
+            total_geral += p['subtotal']
 
     return jsonify({
         'success': True,
