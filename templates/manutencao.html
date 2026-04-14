@@ -32,9 +32,12 @@
         <button class="btn-primary" onclick="carregarRelatorio()">
             <i class="fas fa-sync"></i> Atualizar
         </button>
-        <button class="btn-secondary" onclick="window.print()">
-            <i class="fas fa-file-pdf"></i> Gerar PDF
-        </button>
+        <button class="btn-secondary" onclick="exportarCSV()">
+    <i class="fas fa-file-csv"></i> Exportar CSV
+</button>
+<button class="btn-secondary" onclick="window.print()">
+    <i class="fas fa-file-pdf"></i> Gerar PDF
+</button>
     </div>
 </div>
 
@@ -226,6 +229,11 @@
 
 {% block scripts %}
 <script>
+    function exportarCSV() {
+    const mes = document.getElementById('select-mes').value;
+    const ano = document.getElementById('select-ano').value;
+    window.location.href = `/api/relatorio/csv?mes=${mes}&ano=${ano}`;
+}
 function carregarRelatorio() {
     const mes = document.getElementById('select-mes').value;
     const ano = document.getElementById('select-ano').value;
