@@ -3,6 +3,9 @@ from datetime import datetime, date
 import requests
 import calendar
 import pandas as pd
+import io
+import csv
+from flask import Response 
 
 
 app = Flask(__name__)
@@ -375,6 +378,46 @@ def formatar_data(dt_str):
     except:
         return dt_str
     
+@app.route('/api/relatorio/csv')
+def api_relatorio_csv():
+    mes = request.args.get('mes', type=int) or date.today().month
+    ano = request.args.get('ano', type=int) or date.today().year
+
+    dados = obter_dados(mes, ano)
+
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=';')  # ponto-vírgula para Excel pt-BR
+
+    # cabeçalho
+    writer.writerow(['Nº OS', 'Abertura', 'Fechamento', 'Prefixo', 'Placa',
+                     'Modelo', 'Família', 'Tipo de Serviço', 'Descrição',
+                     'Defeito Relatado', 'Dano Severo', 'Valor Total (R$)'])
+
+    for os in dados['ordens']:
+        if os['valor_total'] > 0:
+            writer.writerow([
+            os['numero_os'],
+            os['data_abertura'],
+            os['data_fechamento'],
+            os['prefixo'],
+            os['placa'],
+            os['modelo'],
+            os['familia'],
+            os['tarefas'],
+            os['descricao'],
+            os['defeito_relatado'],
+            'Sim' if os['is_dano_severo'] else 'Não',
+            str(os['valor_total']).replace('.', ',')
+        ])
+
+    nome_arquivo = f"extrato_manutencao_{MESES.get(mes,'').lower()}_{ano}.csv"
+
+    return Response(
+        '\ufeff' + output.getvalue(),  # BOM UTF-8 para Excel abrir corretamente
+        mimetype='text/csv',
+        headers={'Content-Disposition': f'attachment; filename="{nome_arquivo}"'}
+    )
+
 
 @app.route('/')
 def index():

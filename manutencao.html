@@ -1,0 +1,485 @@
+{% extends "base.html" %}
+
+{% block title %}MAAS Manutenção{% endblock %}
+
+{% block conteudo %}
+<div class="control-bar">
+    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <div class="select-wrapper">
+            <label><i class="fas fa-calendar-alt"></i> Mês:</label>
+            <select id="select-mes" onchange="carregarRelatorio()">
+                <option value="1"  {% if mes_atual == 1  %}selected{% endif %}>Janeiro</option>
+                <option value="2"  {% if mes_atual == 2  %}selected{% endif %}>Fevereiro</option>
+                <option value="3"  {% if mes_atual == 3  %}selected{% endif %}>Março</option>
+                <option value="4"  {% if mes_atual == 4  %}selected{% endif %}>Abril</option>
+                <option value="5"  {% if mes_atual == 5  %}selected{% endif %}>Maio</option>
+                <option value="6"  {% if mes_atual == 6  %}selected{% endif %}>Junho</option>
+                <option value="7"  {% if mes_atual == 7  %}selected{% endif %}>Julho</option>
+                <option value="8"  {% if mes_atual == 8  %}selected{% endif %}>Agosto</option>
+                <option value="9"  {% if mes_atual == 9  %}selected{% endif %}>Setembro</option>
+                <option value="10" {% if mes_atual == 10 %}selected{% endif %}>Outubro</option>
+                <option value="11" {% if mes_atual == 11 %}selected{% endif %}>Novembro</option>
+                <option value="12" {% if mes_atual == 12 %}selected{% endif %}>Dezembro</option>
+            </select>
+        </div>
+        <div class="select-wrapper">
+            <select id="select-ano" onchange="carregarRelatorio()">
+                <option value="2026" {% if ano_atual == 2026 %}selected{% endif %}>2026</option>
+            </select>
+        </div>
+    </div>
+    <div class="btn-group">
+        <button class="btn-primary" onclick="carregarRelatorio()">
+            <i class="fas fa-sync"></i> Atualizar
+        </button>
+        <button class="btn-secondary" onclick="exportarCSV()">
+    <i class="fas fa-file-csv"></i> Exportar CSV
+</button>
+<button class="btn-secondary" onclick="window.print()">
+    <i class="fas fa-file-pdf"></i> Gerar PDF
+</button>
+    </div>
+</div>
+
+<div id="relatorio-area">
+    <div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>
+</div>
+{% endblock %}
+
+{% block extra_style %}
+<style>
+/* ── CARDS DE RESUMO ── */
+.resumo-cards {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+.resumo-card {
+    flex: 1;
+    min-width: 160px;
+    border-radius: 12px;
+    padding: 16px 20px;
+}
+.resumo-card .card-label {
+    font-size: 11px;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.resumo-card .card-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #103a48;
+    margin-top: 4px;
+}
+
+/* ── BLOCO DE MODELO (agrupador) ── */
+.modelo-bloco {
+    margin-bottom: 32px;
+}
+.modelo-titulo {
+    font-size: 13px;
+    font-weight: 700;
+    color: #103a48;
+    background: #e8f5ee;
+    border-left: 4px solid #3fb271;
+    padding: 8px 14px;
+    margin-bottom: 0;
+    border-radius: 8px 8px 0 0;
+}
+
+/* ── BLOCO DE PREFIXO ── */
+.prefixo-header {
+    background: #f4f8fc;
+    border-top: 1px solid #d8e8f0;
+    border-bottom: 1px solid #d8e8f0;
+    padding: 7px 14px;
+    font-size: 12px;
+    color: #333;
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+.prefixo-header span { display: inline-flex; align-items: center; gap: 5px; }
+.prefixo-header strong { color: #103a48; }
+
+/* ── LINHA DE OS ── */
+.os-row { cursor: pointer; transition: background 0.15s; }
+.os-row:hover { background: #f0faf5 !important; }
+.os-row td { vertical-align: middle; }
+
+.badge-tipo {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 50px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.badge-corretiva  { background: #fff0e0; color: #c06000; }
+.badge-preventiva { background: #e0f0ff; color: #005db8; }
+.badge-outros     { background: #f0f0f0; color: #555; }
+.badge-dano       { background: #ffe0e0; color: #c00000; }
+
+/* ── EXPANSÍVEL (insumos) ── */
+.insumos-row { display: none; }
+.insumos-row.aberto { display: table-row; }
+.insumos-inner {
+    padding: 10px 20px 10px 40px;
+    background: #f9fffe;
+    font-size: 11px;
+    border-bottom: 1px solid #e0eeea;
+}
+.insumos-inner table {
+    width: auto;
+    min-width: 380px;
+    font-size: 11px;
+    border-collapse: collapse;
+}
+.insumos-inner th {
+    background: #d4eedd;
+    color: #103a48;
+    font-size: 10px;
+    padding: 5px 10px;
+}
+.insumos-inner td {
+    padding: 4px 10px;
+    border-bottom: 1px solid #e8f2ee;
+    color: #333;
+}
+
+/* ── IMPRESSÃO ── */
+@media print {
+    /* reset de cores para p&b sóbrio */
+    .modelo-titulo {
+        background: none !important;
+        border-left: 3px solid #000 !important;
+        color: #000 !important;
+        font-size: 11px !important;
+        padding: 6px 10px !important;
+        border-radius: 0 !important;
+    }
+    .prefixo-header {
+        background: none !important;
+        border-top: 1px solid #999 !important;
+        border-bottom: 1px solid #999 !important;
+        font-size: 10px !important;
+        padding: 5px 10px !important;
+        gap: 16px !important;
+    }
+    .badge-tipo {
+        background: none !important;
+        color: #000 !important;
+        border: 1px solid #000 !important;
+        padding: 1px 6px !important;
+        font-size: 9px !important;
+        border-radius: 3px !important;
+    }
+    .os-row:hover { background: none !important; }
+
+    /* nunca mostra insumos expandidos na impressão — a tabela resumida já cobre */
+    .insumos-row { display: none !important; }
+
+    /* totais por modelo impressão */
+    .total-modelo-row td {
+        font-size: 10px !important;
+        border-top: 1.5px solid #000 !important;
+        padding: 5px 10px !important;
+    }
+    .total-contrato-row td {
+        font-size: 11px !important;
+        border-top: 2px solid #000 !important;
+        padding: 6px 10px !important;
+    }
+
+    /* cabeçalho de impressão */
+    .print-header {
+        display: block !important;
+        margin-bottom: 16px;
+    }
+    .print-header-title {
+        font-size: 14px;
+        font-weight: 700;
+        text-align: right;
+        color: #000;
+    }
+    .print-header-periodo {
+        font-size: 11px;
+        color: #000;
+        border-bottom: 1.5px solid #000;
+        padding-bottom: 6px;
+        margin-bottom: 8px;
+    }
+    .print-contrato {
+        font-size: 11px;
+        font-weight: 700;
+        color: #000;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 4px;
+        margin-bottom: 8px;
+    }
+}
+
+/* oculto na tela */
+.print-header { display: none; }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function exportarCSV() {
+    const mes = document.getElementById('select-mes').value;
+    const ano = document.getElementById('select-ano').value;
+    window.location.href = `/api/relatorio/csv?mes=${mes}&ano=${ano}`;
+}
+function carregarRelatorio() {
+    const mes = document.getElementById('select-mes').value;
+    const ano = document.getElementById('select-ano').value;
+    const area = document.getElementById('relatorio-area');
+
+    area.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>';
+
+    fetch(`/api/relatorio?mes=${mes}&ano=${ano}`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success || !data.ordens || data.ordens.length === 0) {
+                area.innerHTML = '<div class="empty-message">Nenhuma OS encontrada para o período.</div>';
+                return;
+            }
+
+            const periodoInicio = data.periodo.inicio.split('-').reverse().join('/');
+            const periodoFim    = data.periodo.fim.split('-').reverse().join('/');
+
+            // ── Monta cards de resumo ──────────────────────────────────
+            const cardsHtml = `
+            <div class="resumo-cards no-print">
+                <div class="resumo-card" style="background:#f0f9f4; border-left:4px solid #3fb271;">
+                    <div class="card-label">Período</div>
+                    <div class="card-value" style="font-size:15px;">${periodoInicio} a ${periodoFim}</div>
+                </div>
+                <div class="resumo-card" style="background:#eef4ff; border-left:4px solid #4a90d9;">
+                    <div class="card-label">Total de OS</div>
+                    <div class="card-value">${data.resumo.total_os}</div>
+                </div>
+                <div class="resumo-card" style="background:#fff8e1; border-left:4px solid #f0a500;">
+                    <div class="card-label">Total Faturado</div>
+                    <div class="card-value">R$ ${formatarMoeda(data.resumo.total_faturamento)}</div>
+                </div>
+                <div class="resumo-card" style="background:#f5f0ff; border-left:4px solid #7b5ea7;">
+                    <div class="card-label">Contrato</div>
+                    <div class="card-value" style="font-size:15px;">${data.contrato}</div>
+                </div>
+            </div>`;
+
+            // ── Cabeçalho de impressão ─────────────────────────────────
+            const printHeader = `
+            <div class="print-header">
+                <div class="print-header-periodo">
+                    <strong>Período de Busca: ${periodoInicio} a ${periodoFim}</strong>
+                    <span style="float:right; font-weight:700;">Extrato de Manutenção</span>
+                </div>
+                <div class="print-contrato">Contrato: ${data.contrato} – Consórcio do Sistema Metropolitano – BRT</div>
+            </div>`;
+
+            // ── Agrupa por modelo → prefixo ───────────────────────────
+            let totalGeralContrato = 0;
+            let modelosHtml = '';
+
+            for (const [modelo, prefixosObj] of Object.entries(data.modelos)) {
+                let totalModelo = 0;
+                let prefixosHtml = '';
+
+                for (const [prefixo, ordens] of Object.entries(prefixosObj)) {
+                    const info = ordens[0];
+                    let totalPrefixo = 0;
+                    let linhasOS = '';
+
+                    for (const os of ordens) {
+    // ── Filtro: exibe apenas OS com insumos que tenham valor > 0 ──
+    const temInsumosComValor = os.insumos && os.insumos.some(ins => (ins.valor_total || 0) > 0);
+    if (!temInsumosComValor) continue;
+
+    totalPrefixo += os.valor_total || 0;
+
+    const tarefa = (os.tarefas || '-').toLowerCase();
+    let badgeClass = 'badge-outros';
+    if (tarefa.includes('corretiva'))  badgeClass = 'badge-corretiva';
+    else if (tarefa.includes('preventiva')) badgeClass = 'badge-preventiva';
+    if (os.is_dano_severo) badgeClass = 'badge-dano';
+
+    const badgeLabel = os.is_dano_severo ? 'Dano Severo' : (os.tarefas || '-');
+
+    // linha expandível de insumos
+    let insumoTabela = '';
+    if (os.insumos && os.insumos.length > 0) {
+        let insumoLinhas = '';
+        for (const ins of os.insumos) {
+            const vlrUnit = (ins.valor_unitario != null)
+                ? 'R$ ' + formatarMoeda(ins.valor_unitario)
+                : (ins.quantidade > 0 ? 'R$ ' + formatarMoeda((ins.valor_total || 0) / ins.quantidade) : '-');
+            
+            insumoLinhas += `
+            <tr>
+                <td>${ins.descricao || '-'}</td>
+                <td style="text-align:center">${ins.quantidade || 0}</td>
+                <td style="text-align:right">${vlrUnit}</td>
+                <td style="text-align:right">R$ ${formatarMoeda(ins.valor_total || 0)}</td>
+            </tr>`;
+        }
+        
+        insumoTabela = `
+        <div class="insumos-inner">
+            <strong style="font-size:10px; color:#555; text-transform:uppercase; letter-spacing:.04em;">Insumos / Peças</strong>
+            <table style="margin-top:6px;">
+                <thead><tr>
+                    <th>Descrição</th>
+                    <th style="text-align:center">Qtd</th>
+                    <th style="text-align:right">Valor Unitário</th>
+                    <th style="text-align:right">Valor Total</th>
+                </tr></thead>
+                <tbody>${insumoLinhas}</tbody>
+            </table>
+        </div>`;
+    }
+
+    // ─── AGORA CRIA UMA LINHA PARA CADA INSUMO ───
+    if (os.insumos && os.insumos.length > 0) {
+        for (const ins of os.insumos) {
+            // Pula insumos sem valor
+            if ((ins.valor_total || 0) <= 0) continue;
+            
+            const valorUnitario = (ins.valor_unitario != null)
+                ? 'R$ ' + formatarMoeda(ins.valor_unitario)
+                : (ins.quantidade > 0 ? 'R$ ' + formatarMoeda((ins.valor_total || 0) / ins.quantidade) : '-');
+            
+            const rowId = `os-${os.numero_os}-${ins.descricao.replace(/\s+/g, '-')}`;
+            const insId = `ins-${os.numero_os}`;
+            
+            linhasOS += `
+            <tr class="os-row" onclick="toggleInsumos('${insId}')" id="${rowId}">
+                <td>${os.data_abertura || '-'}</td>
+                <td>${os.data_fechamento || '-'}</td>
+                <td style="text-align:center; font-weight:600;">${os.numero_os}</td>
+                <td><span class="badge-tipo ${badgeClass}">${badgeLabel}</span></td>
+                <td style="max-width:320px; font-size:11px; color:#333;">${ins.descricao || '-'}</td>
+                <td style="text-align:center; font-weight:600;">${ins.quantidade || 0}</td>
+                <td style="text-align:right;">${valorUnitario}</td>
+                <td style="text-align:right; font-weight:600;">${ins.valor_total > 0 ? 'R$ ' + formatarMoeda(ins.valor_total) : '-'}</td>
+            </tr>
+            ${insumoTabela ? `
+            <tr id="${insId}" class="insumos-tr" style="display:none;">
+                <td colspan="8" style="padding:0 12px 12px 12px;">
+                    ${insumoTabela}
+                </td>
+            </tr>` : ''}`;
+        }
+    }
+}
+
+                    totalModelo += totalPrefixo;
+
+                    prefixosHtml += `
+                    <div class="prefixo-header">
+                        <span><i class="fas fa-bus" style="color:#3fb271;"></i> <strong>Prefixo:</strong> ${prefixo}</span>
+                        <span><strong>Placa:</strong> ${info.placa}</span>
+                        <span><strong>Modelo:</strong> ${info.modelo}</span>
+                    </div>
+                    <div class="table-wrapper" style="border-radius:0; border-top:none; margin-bottom:0;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Início</th>
+                                    <th>Final</th>
+                                    <th style="text-align:center">Nº OS</th>
+                                    <th>Tipo de Serviço</th>
+                                    <th>Serviço / Peça</th>
+                                    <th>Qtde</th>
+                                    <th>Valor Unitário</th>
+                                    <th style="text-align:right">Valor Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>${linhasOS}</tbody>
+                            <tfoot>
+                                <tr class="total-modelo-row" style="background:#f0f7f0; font-weight:700; font-size:11px;">
+                                    <td colspan="7" style="padding:7px 12px;">
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>`;
+                }
+
+                totalGeralContrato += totalModelo;
+
+                modelosHtml += `
+                
+                <div class="modelo-bloco">
+                    <div class="modelo-titulo">Modelo: ${modelo}</div>
+                    ${prefixosHtml}
+                    <div class="table-wrapper" style="border-radius:0 0 8px 8px; border-top:none; margin-top:0;">
+                        <table>
+                            <tfoot>
+                                <tr style="background:#c8e6d0; font-weight:700; font-size:12px; color:#103a48;">
+                                    <td colspan="5" style="padding:8px 14px;">Total</td>
+                                    <td style="text-align:right; padding:8px 14px;">R$ ${formatarMoeda(totalModelo)}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>`;
+            }
+
+            // ── Total por Contrato (linha final) ──────────────────────
+            const totalContrato = `
+            <div class="table-wrapper" style="margin-top:8px; border-radius:8px;">
+                <table>
+                    <tfoot>
+                        <tr class="total-contrato-row" style="background:#3fb271; color:#fff; font-weight:700; font-size:13px;">
+                            <td colspan="5" style="padding:10px 16px;">Total Geral</td>
+                            <td style="text-align:right; padding:10px 16px;">R$ ${formatarMoeda(totalGeralContrato)}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>`;
+
+            // ── Rodapé ────────────────────────────────────────────────
+            const rodape = `
+            <div style="margin-top:14px; font-size:11px; color:#888; text-align:right;">
+                Gerado em: ${data.data_geracao} &nbsp;|&nbsp; Contrato: ${data.contrato}
+            </div>`;
+
+            area.innerHTML = `
+            <div class="section">
+                <div class="section-title no-print">Extrato de Manutenção</div>
+                ${printHeader}
+                ${cardsHtml}
+                ${modelosHtml}
+                ${totalContrato}
+                ${rodape}
+            </div>`;
+        })
+        .catch(err => {
+            console.error('Erro:', err);
+            area.innerHTML = '<div class="empty-message">Erro ao carregar os dados.</div>';
+        });
+}
+
+function toggleInsumos(id) {
+    const row = document.getElementById(id);
+    if (row) row.classList.toggle('aberto');
+}
+
+function calcularTotalInsumos(numeroOS) {
+    let total = 0;
+    todosItens.forEach(item => {
+        if (item.numero_os === numeroOS) {
+            total += parseFloat(item.quantidade) || 0;
+        }
+    });
+    return total.toFixed(2);
+}
+
+document.addEventListener('DOMContentLoaded', carregarRelatorio);
+</script>
+{% endblock %}
