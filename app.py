@@ -276,14 +276,13 @@ def buscar_supabase(tabela, filtros=""):
     return r.json() if r.status_code == 200 else []
 
 
-def obter_dados(mes, ano):
-    primeiro_dia = f"{ano}-{mes:02d}-01"
-    ultimo_dia_num = calendar.monthrange(ano, mes)[1]
-    ultimo_dia = f"{ano}-{mes:02d}-{ultimo_dia_num}"
+def obter_dados(mes, ano, periodo='1'):
+
+    data_inicio, data_fim, data_faturamento = calcular_periodo_pecas(periodo, mes, ano)
 
     ordens_raw = buscar_supabase(
         "Ordens_Servico",
-        f"&status=eq.FECHADA&data_fechamento=gte.{primeiro_dia}T00:00:00&data_fechamento=lte.{ultimo_dia}T23:59:59"
+        f"&status=eq.FECHADA&data_fechamento=gte.{data_inicio}T00:00:00&data_fechamento=lte.{data_fim}T23:59:59"
     )
 
     print(f"OS encontradas: {len(ordens_raw)}")
@@ -354,18 +353,20 @@ def obter_dados(mes, ano):
         p = o['prefixo']
         modelos.setdefault(m, {}).setdefault(p, []).append(o)
 
+    ordens_com_valor = [o for o in ordens if o['valor_total'] > 0]
+
     return {
         "ordens": ordens,
         "modelos": modelos,
         "periodo": {
-            "inicio": primeiro_dia,
-            "fim": ultimo_dia,
+            "inicio": data_inicio, 
+            "fim": data_fim,
             "mes": MESES.get(mes, ''),
             "ano": ano
         },
         "resumo": {
             "total_faturamento": sum(o['valor_total'] for o in ordens),
-            "total_os": len(ordens),
+            "total_os": len(ordens_com_valor),
         }
     }
 
@@ -440,8 +441,9 @@ def pecas():
 def api_relatorio():
     mes = request.args.get('mes', type=int) or date.today().month
     ano = request.args.get('ano', type=int) or date.today().year
+    periodo = request.args.get('periodo', '1')
 
-    dados = obter_dados(mes, ano)
+    dados = obter_dados(mes, ano, periodo)
     custos = obter_custos_operacionais()
     resumo_executivo = []
     for item in Resumo_executivo:
