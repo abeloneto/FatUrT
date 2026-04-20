@@ -387,34 +387,92 @@ def api_relatorio_csv():
     dados = obter_dados(mes, ano)
 
     output = io.StringIO()
-    writer = csv.writer(output, delimiter=';')  # ponto-vírgula para Excel pt-BR
+    writer = csv.writer(output, delimiter=';')
 
     # cabeçalho
     writer.writerow(['Nº OS', 'Abertura', 'Fechamento', 'Prefixo', 'Placa',
-                     'Modelo', 'Família', 'Tipo de Serviço', 'Descrição',
-                     'Defeito Relatado', 'Dano Severo', 'Valor Total (R$)'])
+                     'Modelo', 'Família', 'Tipo de Serviço', 'Descrição Serviço',
+                     'Defeito Relatado', 'Dano Severo', 'Item/Peça',
+                     'Quantidade', 'Valor Unitário (R$)', 'Valor Total (R$)'])
 
+    # Buscar encaminhamentos
+    numeros_os = [str(os['numero_os']) for os in dados['ordens'] if os['valor_total'] > 0]
+    
+    encaminhamentos_raw = []
+    if numeros_os:
+        encaminhamentos_raw = buscar_supabase(
+            "OS_Encaminhamentos",
+            f"&numero_os_direto=in.({','.join(numeros_os)})&insumo_descricao=not.is.null"
+        )
+
+    # Agrupar encaminhamentos por OS
+    encaminhamentos_por_os = {}
+    for e in encaminhamentos_raw:
+        num_os = str(e.get('numero_os_direto', ''))
+        if num_os not in encaminhamentos_por_os:
+            encaminhamentos_por_os[num_os] = []
+        
+        quantidade = float(e.get('insumo_quantidade') or 0)
+        valor_total = float(e.get('insumo_valor_total') or 0)
+        valor_unitario = valor_total / quantidade if quantidade > 0 else 0
+        
+        encaminhamentos_por_os[num_os].append({
+            'descricao': e.get('insumo_descricao', '-'),
+            'quantidade': quantidade,
+            'valor_unitario': valor_unitario,
+            'valor_total': valor_total
+        })
+
+    # Escrever linhas
     for os in dados['ordens']:
         if os['valor_total'] > 0:
-            writer.writerow([
-            os['numero_os'],
-            os['data_abertura'],
-            os['data_fechamento'],
-            os['prefixo'],
-            os['placa'],
-            os['modelo'],
-            os['familia'],
-            os['tarefas'],
-            os['descricao'],
-            os['defeito_relatado'],
-            'Sim' if os['is_dano_severo'] else 'Não',
-            str(os['valor_total']).replace('.', ',')
-        ])
+            num_os = str(os['numero_os'])
+            encaminhamentos = encaminhamentos_por_os.get(num_os, [])
+            
+            if encaminhamentos:
+                # Se tem encaminhamentos, uma linha por item/peça
+                for enc in encaminhamentos:
+                    writer.writerow([
+                        os['numero_os'],
+                        os['data_abertura'],
+                        os['data_fechamento'],
+                        os['prefixo'],
+                        os['placa'],
+                        os['modelo'],
+                        os['familia'],
+                        os['tarefas'],
+                        os['descricao'],
+                        os['defeito_relatado'],
+                        'Sim' if os['is_dano_severo'] else 'Não',
+                        enc['descricao'],  # Item/Peça
+                        str(enc['quantidade']).replace('.', ','),  # Quantidade
+                        str(enc['valor_unitario']).replace('.', ','),  # Valor Unitário
+                        str(enc['valor_total']).replace('.', ',')  # Valor Total do item
+                    ])
+            else:
+                # Se não tem encaminhamentos, uma linha sem detalhes de peças
+                writer.writerow([
+                    os['numero_os'],
+                    os['data_abertura'],
+                    os['data_fechamento'],
+                    os['prefixo'],
+                    os['placa'],
+                    os['modelo'],
+                    os['familia'],
+                    os['tarefas'],
+                    os['descricao'],
+                    os['defeito_relatado'],
+                    'Sim' if os['is_dano_severo'] else 'Não',
+                    '-',  # Item/Peça
+                    '-',  # Quantidade
+                    '-',  # Valor Unitário
+                    str(os['valor_total']).replace('.', ',')  # Valor Total
+                ])
 
     nome_arquivo = f"extrato_manutencao_{MESES.get(mes,'').lower()}_{ano}.csv"
 
     return Response(
-        '\ufeff' + output.getvalue(),  # BOM UTF-8 para Excel abrir corretamente
+        '\ufeff' + output.getvalue(),
         mimetype='text/csv',
         headers={'Content-Disposition': f'attachment; filename="{nome_arquivo}"'}
     )
