@@ -447,6 +447,7 @@
                                     
                                     const rowId = `os-${os.numero_os}-${ins.descricao.replace(/\s+/g, '-')}`;
                                     const insId = `ins-${os.numero_os}`;
+                                    const km = os.km_atual || '-';
                                     
                                     linhasOS += `
                                     <tr class="os-row" onclick="toggleInsumos('${insId}')" id="${rowId}">
@@ -479,7 +480,7 @@
                                 <span><i class="fas fa-bus" style="color:#3fb271;"></i> <strong>Prefixo:</strong> ${prefixo}</span>
                                 <span><strong>Placa:</strong> ${info.placa}</span>
                                 <span><strong>Modelo:</strong> ${info.modelo}</span>
-                                <span><strong>Hodômetro:</strong> ${info.km_inicial}</span>
+                                <span><strong>Hodômetro:</strong> ${info.km_atual}</span>
                             </div>
                             <div class="table-wrapper" style="border-radius:0; border-top:none; margin-bottom:0;">
                                 <table>
