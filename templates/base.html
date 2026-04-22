@@ -309,6 +309,16 @@
             .control-bar { flex-direction: column; align-items: stretch; }
             .btn-group { justify-content: center; }
         }
+.print-only {
+    display: none;
+}
+
+@media print {
+    .print-only {
+        display: block;
+    }
+}
+        
     </style>
     {% block extra_style %}{% endblock %}
 </head>
@@ -327,9 +337,10 @@
                 <a href="/" class="nav-aba {% if pagina_ativa == 'manutencao' %}ativo{% endif %}">
                     <i class="fas fa-wrench"></i> MAAS Manutenção
                 </a>
-                <a href="/pecas" class="nav-aba {% if pagina_ativa == 'pecas' %}ativo{% endif %}">
+                <!-- <a href="/pecas" class="nav-aba {% if pagina_ativa == 'pecas' %}ativo{% endif %}">
                     <i class="fas fa-cogs"></i> MAAS Peças
-                </a>
+                </a> -->
+
             </nav>
         </div>
     </header>

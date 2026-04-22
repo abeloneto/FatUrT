@@ -393,6 +393,7 @@
                             if (os.is_dano_severo) badgeClass = 'badge-dano';
 
                             const badgeLabel = os.is_dano_severo ? 'Dano Severo' : (os.tarefas || '-');
+                            const notasFiscais = os.notas_fiscais || '-';
 
                             // linha expandível de insumos
                             let insumoTabela = '';
@@ -427,7 +428,7 @@
                                     </table>
                                 </div>`;
                             }
-
+                            
                             // ─── AGORA CRIA UMA LINHA PARA CADA INSUMO ───
                             if (os.insumos && os.insumos.length > 0) {
                                 for (const ins of os.insumos) {
@@ -449,11 +450,17 @@
                                     const insId = `ins-${os.numero_os}`;
                                     const km = os.km_atual || '-';
                                     
+                                    const notasHtml = notasFiscais !== '-' 
+                                        ? `<span class="notas-fiscais-badge"> ${notasFiscais}</span>`
+                                        : '<span class="sem-nota">-</span>';
+
+                                    
                                     linhasOS += `
                                     <tr class="os-row" onclick="toggleInsumos('${insId}')" id="${rowId}">
                                         <td>${os.data_abertura || '-'}</td>
                                         <td>${os.data_fechamento || '-'}</td>
                                         <td style="text-align:center; font-weight:600;">${os.numero_os}</td>
+                                        <td style="text-align:center; font-weight:600;">${notasHtml}</td>
                                         <td><span class="badge-tipo ${badgeClass}">${badgeLabel}</span></td>
                                         <td style="max-width:320px; font-size:11px; color:#333;">${ins.descricao || '-'}</td>
                                         <td style="text-align:center; font-weight:600;">${ins.quantidade || 0}</td>
@@ -489,6 +496,7 @@
                                             <th>Início</th>
                                             <th>Final</th>
                                             <th style="text-align:center">Nº OS</th>
+                                            <th style="text-align:center">Nº NF</th>
                                             <th>Tipo de Serviço</th>
                                             <th>Serviço / Peça</th>
                                             <th>Qtde</th>
