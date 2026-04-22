@@ -284,15 +284,19 @@ def obter_dados(mes, ano, periodo='1'):
         "Ordens_Servico",
         f"&status=eq.FECHADA&data_fechamento=gte.{data_inicio}T00:00:00&data_fechamento=lte.{data_fim}T23:59:59"
     )
-
-    print(f"OS encontradas: {len(ordens_raw)}")
-
+    
     encaminhamentos_raw = buscar_supabase("OS_Encaminhamentos")
     frota_raw = buscar_supabase("View_Frota_Completa")
-    apoio_raw = buscar_supabase("Apoio_Etapas")  # novo
+    apoio_raw = buscar_supabase("Apoio_Etapas")
+    # ✅ BUSCAR SOLICITAÇÕES DE SERVIÇO
+    solicitacoes_raw = buscar_supabase("Solicitacao_Servicos")
+    
 
     # índice de apoio por codigo_etapa
     apoio_por_codigo = {a['codigo_etapa']: a['descricao'] for a in apoio_raw}
+
+    # ✅ CRIAR ÍNDICE DE SOLICITAÇÕES POR numero_ss
+    solicitacoes_por_ss = {str(s['numero_ss']): s for s in solicitacoes_raw}
 
     enc_por_os = {}
     for e in encaminhamentos_raw:
@@ -308,7 +312,13 @@ def obter_dados(mes, ano, periodo='1'):
         veiculo = frota_por_prefixo.get(prefixo, {})
         encaminhamentos = enc_por_os.get(num_os, [])
 
+        # ✅ BUSCAR KM DA SOLICITAÇÃO DE SERVIÇO
+        numero_ss = str(os.get('numero_ss', ''))
+        solicitacao = solicitacoes_por_ss.get(numero_ss, {})
+        km_atual = solicitacao.get('km_atual', '-')
+
         tarefas = list(set(e['tarefa'] for e in encaminhamentos if e.get('tarefa')))
+
 
         # descrição via Apoio_Etapas
         descricoes = []
@@ -338,25 +348,27 @@ def obter_dados(mes, ano, periodo='1'):
             "placa": veiculo.get('placa', '-'),
             "modelo": veiculo.get('modelo', '-'),
             "familia": veiculo.get('familia', '-'),
-            "km_atual": os.get('km_atual', '-'),
+            "km_atual": km_atual,  # ✅ AGORA VEM DA SOLICITAÇÃO
             "tarefas": ", ".join(tarefas) if tarefas else '-',
             "descricao": " | ".join(descricoes) if descricoes else os.get('defeito_relatado', '-'),
             "defeito_relatado": os.get('defeito_relatado', '-'),
-            "is_dano_severo": os.get('is_dano_severo', False),  # novo
-            "insumos": insumos,                                  # novo
+            "is_dano_severo": os.get('is_dano_severo', False),
+            "insumos": insumos,
             "valor_total": valor_total,
         })
 
+    # Filtrar apenas OSs com valor > 0
+    ordens_com_valor = [o for o in ordens if o['valor_total'] > 0]
+
+    # Criar modelos apenas com OSs filtradas
     modelos = {}
-    for o in ordens:
+    for o in ordens_com_valor:
         m = o['modelo']
         p = o['prefixo']
         modelos.setdefault(m, {}).setdefault(p, []).append(o)
 
-    ordens_com_valor = [o for o in ordens if o['valor_total'] > 0]
-
     return {
-        "ordens": ordens,
+        "ordens": ordens_com_valor,
         "modelos": modelos,
         "periodo": {
             "inicio": data_inicio, 
@@ -365,7 +377,7 @@ def obter_dados(mes, ano, periodo='1'):
             "ano": ano
         },
         "resumo": {
-            "total_faturamento": sum(o['valor_total'] for o in ordens),
+            "total_faturamento": sum(o['valor_total'] for o in ordens_com_valor),
             "total_os": len(ordens_com_valor),
         }
     }
