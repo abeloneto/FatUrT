@@ -290,6 +290,7 @@ def obter_dados(mes, ano, periodo='1'):
     apoio_raw = buscar_supabase("Apoio_Etapas")
     # ✅ BUSCAR SOLICITAÇÕES DE SERVIÇO
     solicitacoes_raw = buscar_supabase("Solicitacao_Servicos")
+    nf_raw = buscar_supabase("OS_NF")
     
 
     # índice de apoio por codigo_etapa
@@ -298,6 +299,17 @@ def obter_dados(mes, ano, periodo='1'):
     # ✅ CRIAR ÍNDICE DE SOLICITAÇÕES POR numero_ss
     solicitacoes_por_ss = {str(s['numero_ss']): s for s in solicitacoes_raw}
 
+    notas_por_os = {}
+    for nf in nf_raw:
+        num_os_nota = str(nf.get('os'))
+
+        if num_os_nota not in notas_por_os:
+            notas_por_os[num_os_nota] = []
+        
+        numero_nota = nf.get('nf', '-')  # ajuste o nome da coluna da nota
+        if numero_nota != '-':
+            notas_por_os[num_os_nota].append(str(numero_nota))
+    
     enc_por_os = {}
     for e in encaminhamentos_raw:
         num = str(e.get('numero_os_direto', ''))
@@ -311,6 +323,8 @@ def obter_dados(mes, ano, periodo='1'):
         prefixo = str(os['prefixo_veiculo'])
         veiculo = frota_por_prefixo.get(prefixo, {})
         encaminhamentos = enc_por_os.get(num_os, [])
+        notas_desta_os = notas_por_os.get(num_os, [])
+        numeros_notas = ", ".join(notas_desta_os) if notas_desta_os else '-'
 
         # ✅ BUSCAR KM DA SOLICITAÇÃO DE SERVIÇO
         numero_ss = str(os.get('numero_ss', ''))
@@ -319,7 +333,7 @@ def obter_dados(mes, ano, periodo='1'):
 
         tarefas = list(set(e['tarefa'] for e in encaminhamentos if e.get('tarefa')))
 
-
+        
         # descrição via Apoio_Etapas
         descricoes = []
         for e in encaminhamentos:
@@ -355,6 +369,7 @@ def obter_dados(mes, ano, periodo='1'):
             "is_dano_severo": os.get('is_dano_severo', False),
             "insumos": insumos,
             "valor_total": valor_total,
+            "notas_fiscais": numeros_notas,
         })
 
     # Filtrar apenas OSs com valor > 0
@@ -395,14 +410,15 @@ def formatar_data(dt_str):
 def api_relatorio_csv():
     mes = request.args.get('mes', type=int) or date.today().month
     ano = request.args.get('ano', type=int) or date.today().year
+    periodo = request.args.get('periodo', '1')
 
-    dados = obter_dados(mes, ano)
+    dados = obter_dados(mes, ano, periodo)
 
     output = io.StringIO()
     writer = csv.writer(output, delimiter=';')
 
     # cabeçalho
-    writer.writerow(['Nº OS', 'Abertura', 'Fechamento', 'Prefixo', 'Placa',
+    writer.writerow(['Nº OS', 'Nota Fiscal', 'Abertura', 'Fechamento', 'Prefixo', 'Placa',
                      'Modelo', 'Família', 'Tipo de Serviço', 'Descrição Serviço',
                      'Defeito Relatado', 'Dano Severo', 'Item/Peça',
                      'Quantidade', 'Valor Unitário (R$)', 'Valor Total (R$)'])
@@ -426,7 +442,7 @@ def api_relatorio_csv():
         
         quantidade = float(e.get('insumo_quantidade') or 0)
         valor_total = float(e.get('insumo_valor_total') or 0)
-        valor_unitario = valor_total / quantidade if quantidade > 0 else 0
+        valor_unitario = round(valor_total / quantidade , 2) if quantidade > 0 else 0
         
         encaminhamentos_por_os[num_os].append({
             'descricao': e.get('insumo_descricao', '-'),
@@ -446,6 +462,7 @@ def api_relatorio_csv():
                 for enc in encaminhamentos:
                     writer.writerow([
                         os['numero_os'],
+                        os['notas_fiscais'],
                         os['data_abertura'],
                         os['data_fechamento'],
                         os['prefixo'],
@@ -465,6 +482,7 @@ def api_relatorio_csv():
                 # Se não tem encaminhamentos, uma linha sem detalhes de peças
                 writer.writerow([
                     os['numero_os'],
+                    os['notas_fiscais'],
                     os['data_abertura'],
                     os['data_fechamento'],
                     os['prefixo'],
