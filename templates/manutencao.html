@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}MAAS Manutenção{% endblock %}
+{% block title %}MAAS Peças{% endblock %}
 
 {% block conteudo %}
 <div class="control-bar">
@@ -33,6 +33,7 @@
                 <option value="1">01 a 10</option>
                 <option value="2">11 a 20</option>
                 <option value="3">21 ao último dia</option>
+                <option value="4">Mês completo</option>
             </select>
         </div>
     </div>
@@ -462,6 +463,7 @@
                                         <td style="text-align:center; font-weight:600;">${os.numero_os}</td>
                                         <td style="text-align:center; font-weight:600;">${notasHtml}</td>
                                         <td><span class="badge-tipo ${badgeClass}">${badgeLabel}</span></td>
+                                        <td style="text-align:center; font-weight:600;">${os.defeito_relatado}</td>
                                         <td style="max-width:320px; font-size:11px; color:#333;">${ins.descricao || '-'}</td>
                                         <td style="text-align:center; font-weight:600;">${ins.quantidade || 0}</td>
                                         <td style="text-align:right;">${valorUnitario}</td>
@@ -498,6 +500,7 @@
                                             <th style="text-align:center">Nº OS</th>
                                             <th style="text-align:center">Nº NF</th>
                                             <th>Tipo de Serviço</th>
+                                            <th>Defeito Relatado</th>
                                             <th>Serviço / Peça</th>
                                             <th>Qtde</th>
                                             <th>Valor Unitário</th>

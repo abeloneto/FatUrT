@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}MAAS Peças{% endblock %}
+{% block title %}MAAS Faturamento Mensal{% endblock %}
 
 {% block conteudo %}
 <div class="control-bar">
     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
         <div class="select-wrapper">
             <label><i class="fas fa-calendar-alt"></i> Mês:</label>
-            <select id="select-mes" onchange="carregarPecas()">
+            <select id="select-mes" onchange="carregarFaturamento()">
                 <option value="1" {% if mes_atual == 1 %}selected{% endif %}>Janeiro</option>
                 <option value="2" {% if mes_atual == 2 %}selected{% endif %}>Fevereiro</option>
                 <option value="3" {% if mes_atual == 3 %}selected{% endif %}>Março</option>
@@ -23,21 +23,13 @@
             </select>
         </div>
         <div class="select-wrapper">
-            <select id="select-ano" onchange="carregarPecas()">
+            <select id="select-ano" onchange="carregarFaturamento()">
                 <option value="2026" {% if ano_atual == 2026 %}selected{% endif %}>2026</option>
-            </select>
-        </div>
-        <div class="select-wrapper">
-            <label><i class="fas fa-calendar-week"></i> Período:</label>
-            <select id="select-periodo" onchange="carregarPecas()">
-                <option value="1">01 a 10</option>
-                <option value="2">11 a 20</option>
-                <option value="3">21 ao último dia</option>
             </select>
         </div>
     </div>
     <div class="btn-group">
-        <button class="btn-primary" onclick="carregarPecas()">
+        <button class="btn-primary" onclick="carregarFaturamento()">
             <i class="fas fa-sync"></i> Atualizar
         </button>
         <button class="btn-secondary" onclick="window.print()">
@@ -53,126 +45,410 @@
 
 {% block scripts %}
 <script>
+// Função para formatar valores monetários
+function formatarMoeda(valor) {
+    return parseFloat(valor).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
 
-function carregarPecas() {
+function carregarFaturamento() {
     const mes = document.getElementById('select-mes').value;
     const ano = document.getElementById('select-ano').value;
-    const periodo = document.getElementById('select-periodo').value;
     const area = document.getElementById('relatorio-area');
 
     area.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>';
 
-    fetch(`/api/pecas?mes=${mes}&ano=${ano}&periodo=${periodo}`)
-        .then(r => r.json())
-        .then(data => {
-            if (!data.success || data.prefixos.length === 0) {
-                area.innerHTML = '<div class="empty-message">Nenhuma peça encontrada para o período.</div>';
-                return;
-            }
+    // Carregar dados em paralelo
+    Promise.all([
+        fetch(`/api/faturamento-mensal?mes=${mes}&ano=${ano}`).then(r => r.json()),
+        fetch(`/api/pecas?mes=${mes}&ano=${ano}&periodo=1`).then(r => r.json()),
+        fetch(`/api/pecas?mes=${mes}&ano=${ano}&periodo=2`).then(r => r.json()),
+        fetch(`/api/pecas?mes=${mes}&ano=${ano}&periodo=3`).then(r => r.json())
+    ])
+    .then(([faturamento, pecas1, pecas2, pecas3]) => {        
+        if (!faturamento.success) {
+            area.innerHTML = '<div class="empty-message">Erro ao carregar dados do faturamento.</div>';
+            return;
+        }
 
-            let linhas = '';
-            let totalGeral = 0;
-
-            for (const prefixo of data.prefixos) {
-                linhas += `
-                    <tr style="background:#f8fffe;">
-                        <td colspan="5" style="padding:8px 12px; font-size:11px; color:#333; border-top:1px solid #ddd;">
-                            <strong>Prefixo: ${prefixo.prefixo}</strong> &nbsp;&nbsp;
-                            Placa: ${prefixo.placa} &nbsp;&nbsp;
-                            Modelo: ${prefixo.modelo}
-                        </td>
-                    </tr>`;
-
-                for (const item of prefixo.itens) {
-                    const valorNF = item.valor_nf !== null ? `R$ ${formatarMoeda(item.valor_nf)}` : '-';
-                    linhas += `
-                            <tr>
-                                <td>${item.data_fim}</td>
-                                <td style="text-align:center">${item.numero_os}</td>
-                                <td style="text-align:center">${item.numero_nf}</td>
-                                <td>${item.descricao}</td>
-                                <td style="text-align:center">${item.quantidade}</td>
-                            </tr>`;
-                }
-                totalGeral += prefixo.subtotal;
-            }
-
-            area.innerHTML = `
-                <div class="section">
-                    <div class="section-title">Faturamento de Peças</div>
-
-                    <div class="no-print" style="display:flex; gap:16px; margin-bottom:20px; flex-wrap:wrap;">
-                        <div style="flex:1; min-width:180px; background:#f0f9f4; border-radius:12px; padding:16px 20px; border-left:4px solid #3fb271;">
-                            <div style="font-size:11px; color:#555; text-transform:uppercase; letter-spacing:0.06em;">Período</div>
-                            <div style="font-size:16px; font-weight:700; color:#103a48; margin-top:4px;">
-                                ${data.periodo.inicio.split('-').reverse().join('/')} a ${data.periodo.fim.split('-').reverse().join('/')}
-                            </div>
-                        </div>
-                        <div style="flex:1; min-width:180px; background:#fff8e1; border-radius:12px; padding:16px 20px; border-left:4px solid #f0a500;">
-                            <div style="font-size:11px; color:#555; text-transform:uppercase; letter-spacing:0.06em;">Data de Faturamento</div>
-                            <div style="font-size:18px; font-weight:700; color:#103a48; margin-top:4px;">
-                                ${data.periodo.faturamento.split('-').reverse().join('/')}
-                            </div>
-                        </div>
-                        <div style="flex:1; min-width:180px; background:#eef4ff; border-radius:12px; padding:16px 20px; border-left:4px solid #4a90d9;">
-                            <div style="font-size:11px; color:#555; text-transform:uppercase; letter-spacing:0.06em;">Total Geral</div>
-                            <div style="font-size:22px; font-weight:700; color:#103a48; margin-top:4px;">
-                                R$ ${formatarMoeda(totalGeral)}
-                            </div>
-                        </div>
-                        <div style="flex:1; min-width:180px; background:#f5f0ff; border-radius:12px; padding:16px 20px; border-left:4px solid #7b5ea7;">
-                            <div style="font-size:11px; color:#555; text-transform:uppercase; letter-spacing:0.06em;">Total de Itens</div>
-                            <div style="font-size:22px; font-weight:700; color:#103a48; margin-top:4px;">
-                                ${data.resumo.total_itens}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Data</th>
-                                    <th>Nº OS</th>
-                                    <th>Nº NF</th>
-                                    <th>Peça</th>
-                                    <th style="text-align:center">Qtd</th>
-                                </tr>
-                            </thead>
-                            <tbody>${linhas}</tbody>
-                            <tfoot>
-    <tr style="background:#4fb16e; color:#fff; font-weight:700; font-size:12px;">
-        <td colspan="4" style="padding:8px 12px; text-align:Left;">
-            TOTAL PEÇAS
-        </td>
-        <td style="text-align:center; padding:8px 12px;">
-            ${data.resumo.total_itens}
-        </td>
-    </tr>
-    <tr style="background:#4fb16e; color:#fff; font-weight:700; font-size:12px;">
-        <td colspan="4  " style="padding:8px 12px; text-align:Left;">
-            TOTAL VALOR 
-        </td>
-        <td style="text-align:center; padding:8px 12px;">
-            R$ ${formatarMoeda(totalGeral)}
-        </td>
-        
-    </tr>
-</tfoot>
-                        </table>
-                    </div>
-                
-                    <div style="margin-top:12px; font-size:11px; color:#888; text-align:right;">
-                        Gerado em: ${data.data_geracao} &nbsp;|&nbsp; Contrato: 001/2025
-                    </div>
-                </div>`;
-        })
-        .catch(err => {
-            console.error('Erro:', err);
-            area.innerHTML = '<div class="empty-message">Erro ao carregar os dados.</div>';
-        });
+        renderizarFaturamento(faturamento, [pecas1, pecas2, pecas3]);
+    })
+    .catch(err => {
+        console.error('Erro:', err);
+        area.innerHTML = '<div class="empty-message">Erro ao carregar os dados.</div>';
+    });
 }
 
-document.addEventListener('DOMContentLoaded', carregarPecas);
+function renderizarFaturamento(data, pecasPeriodos) {
+    const area = document.getElementById('relatorio-area');
+    
+    // Calcular totais
+    const totalVeiculos = data.veiculos.reduce((sum, v) => sum + v.valor_mensal, 0);
+    const totalPecasPeriodo1 = pecasPeriodos[0].resumo?.total_geral || 0;
+    const totalPecasPeriodo2 = pecasPeriodos[1].resumo?.total_geral || 0;
+    const totalPecasPeriodo3 = pecasPeriodos[2].resumo?.total_geral || 0;
+    const totalPecas = totalPecasPeriodo1 + totalPecasPeriodo2 + totalPecasPeriodo3;
+    
+    const totalGeral = totalVeiculos + data.estoque_pecas + totalPecas;
+
+    // Cards de resumo
+    const cardsResumo = `
+        <div class="no-print" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:24px;">
+            <div style="background:#f0f9f4; border-radius:12px; padding:16px 20px; border-left:4px solid #3fb271;">
+                <div style="font-size:11px; color:#555; text-transform:uppercase; letter-spacing:0.06em;">Período</div>
+                <div style="font-size:16px; font-weight:700; color:#103a48; margin-top:4px;">
+                    ${data.nome_mes}/${data.ano}
+                </div>
+            </div>
+            <div style="background:#eef4ff; border-radius:12px; padding:16px 20px; border-left:4px solid #4a90d9;">
+                <div style="font-size:11px; color:#555; text-transform:uppercase; letter-spacing:0.06em;">Veículos Cadastrados</div>
+                <div style="font-size:22px; font-weight:700; color:#103a48; margin-top:4px;">
+                    ${data.veiculos.length}
+                </div>
+            </div>
+            <div style="background:#fff8e1; border-radius:12px; padding:16px 20px; border-left:4px solid #f0a500;">
+                <div style="font-size:11px; color:#555; text-transform:uppercase; letter-spacing:0.06em;">Total Faturamento</div>
+                <div style="font-size:22px; font-weight:700; color:#103a48; margin-top:4px;">
+                    R$ ${formatarMoeda(totalGeral)}
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Seção 1: Custos Fixos por Veículo
+    let linhasVeiculos = '';
+    data.veiculos.forEach(v => {
+        linhasVeiculos += `
+            <tr>
+                <td>${v.prefixo}</td>
+                <td>${v.placa}</td>
+                <td>${v.modelo}</td>
+                <td style="text-align:right; font-weight:600;">R$ ${formatarMoeda(v.valor_mensal)}</td>
+            </tr>`;
+    });
+
+    const secaoVeiculos = `
+        <div class="section">
+            <div class="section-title">
+                <i class="fas fa-bus" style="margin-right:8px;"></i>
+                1. Custos Fixos por Veículo
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Prefixo</th>
+                            <th>Placa</th>
+                            <th>Modelo</th>
+                            <th style="text-align:right;">Valor Mensal</th>
+                        </tr>
+                    </thead>
+                    <tbody>${linhasVeiculos}</tbody>
+                    <tfoot>
+                        <tr style="background:#4fb16e; color:#fff; font-weight:700;">
+                            <td colspan="3" style="padding:10px 12px;">SUBTOTAL VEÍCULOS</td>
+                            <td style="text-align:right; padding:10px 12px;">R$ ${formatarMoeda(totalVeiculos)}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    `;
+
+    // Seção 2: Estoque de Peças
+    const secaoEstoque = `
+        <div class="section">
+            <div class="section-title">
+                <i class="fas fa-boxes" style="margin-right:8px;"></i>
+                2. Estoque de Peças (Valor Fixo)
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Descrição</th>
+                            <th style="text-align:right;">Valor Mensal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Manutenção de Estoque de Peças</td>
+                            <td style="text-align:right; font-weight:600;">R$ ${formatarMoeda(data.estoque_pecas)}</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr style="background:#4fb16e; color:#fff; font-weight:700;">
+                            <td style="padding:10px 12px;">SUBTOTAL ESTOQUE</td>
+                            <td style="text-align:right; padding:10px 12px;">R$ ${formatarMoeda(data.estoque_pecas)}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    `;
+
+    // Seção 3: Danos Severos
+    const secaoDanosSeveros = gerarSecaoDanosSeveros(data);
+
+    // Seção 4: Custos Operacionais
+    const secaoCustosOperacionais = `
+        <div class="section">
+            <div class="section-title">
+                <i class="fas fa-cogs" style="margin-right:8px;"></i>
+                4. Custos Operacionais
+            </div>
+            <div style="background:#d1ecf1; border-left:4px solid #17a2b8; padding:16px 20px; border-radius:8px; margin-bottom:16px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <i class="fas fa-info-circle" style="font-size:24px; color:#0c5460;"></i>
+                    <div>
+                        <div style="font-weight:600; color:#0c5460; margin-bottom:4px;">Em Discussão Estratégica</div>
+                        <div style="font-size:13px; color:#0c5460;">
+                            Os custos operacionais estão sendo debatidos pela cúpula estratégica da empresa.
+                            Aguardando veredito para inclusão neste relatório.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Categoria</th>
+                            <th style="text-align:right;">Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="2" style="text-align:center; color:#999; padding:20px;">
+                                <i class="fas fa-clock" style="font-size:32px; margin-bottom:8px; display:block;"></i>
+                                Aguardando definição
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr style="background:#6c757d; color:#fff; font-weight:700;">
+                            <td style="padding:10px 12px;">SUBTOTAL CUSTOS OPERACIONAIS</td>
+                            <td style="text-align:right; padding:10px 12px;">R$ 0,00</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    `;
+
+    function gerarSecaoDanosSeveros(data) {
+    const danos = data.danos_severos || [];
+    const total = data.total_danos_severos || 0;
+    
+    let linhasDanos = '';
+    
+    if (danos.length === 0) {
+        linhasDanos = `
+            <tr>
+                <td colspan="5" style="text-align:center; color:#999; padding:20px;">
+                    <i class="fas fa-check-circle" style="font-size:32px; margin-bottom:8px; display:block; color:#28a745;"></i>
+                    Nenhum dano severo registrado neste período
+                </td>
+            </tr>
+        `;
+    } else {
+        danos.forEach(dano => {
+            linhasDanos += `
+                <tr>
+                    <td>${dano.prefixo}</td>
+                    <td style="text-align:center;">${dano.numero_os}</td>
+                    <td>${dano.modelo}</td>
+                    <td style="font-size:11px;">${dano.defeito_relatado}</td>
+                    <td style="text-align:right; font-weight:600;">R$ ${formatarMoeda(dano.valor)}</td>
+                </tr>
+            `;
+        });
+    }
+    
+    return `
+        <div class="section">
+            <div class="section-title">
+                <i class="fas fa-tools" style="margin-right:8px;"></i>
+                3. Serviços Extraordinários (Danos Severos)
+            </div>
+            ${danos.length === 0 ? `
+                <div style="background:#d4edda; border-left:4px solid #28a745; padding:16px 20px; border-radius:8px; margin-bottom:16px;">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <i class="fas fa-check-circle" style="font-size:24px; color:#155724;"></i>
+                        <div>
+                            <div style="font-weight:600; color:#155724; margin-bottom:4px;">Tudo OK!</div>
+                            <div style="font-size:13px; color:#155724;">
+                                Nenhum dano severo foi registrado neste período.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ` : ''}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Prefixo</th>
+                            <th style="text-align:center;">Nº OS</th>
+                            <th>Modelo</th>
+                            <th>Defeito Relatado</th>
+                            <th style="text-align:right;">Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>${linhasDanos}</tbody>
+                    <tfoot>
+                        <tr style="background:#${danos.length > 0 ? 'dc3545' : '6c757d'}; color:#fff; font-weight:700;">
+                            <td colspan="4" style="padding:10px 12px;">SUBTOTAL DANOS SEVEROS</td>
+                            <td style="text-align:right; padding:10px 12px;">R$ ${formatarMoeda(total)}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    `;
+}
+
+    // Seção 5: Peças (3 períodos)
+    const secaoPecas = gerarSecaoPecas(pecasPeriodos, totalPecasPeriodo1, totalPecasPeriodo2, totalPecasPeriodo3, totalPecas);
+
+    // Total Geral
+    const secaoTotal = `
+        <div class="section" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius:12px; padding:24px; margin-top:32px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; color:#fff;">
+                <div>
+                    <div style="font-size:14px; opacity:0.9; margin-bottom:4px;">TOTAL GERAL DO FATURAMENTO</div>
+                    <div style="font-size:32px; font-weight:700;">${data.nome_mes}/${data.ano}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:42px; font-weight:700;">R$ ${formatarMoeda(totalGeral)}</div>
+                    <div style="font-size:13px; opacity:0.9; margin-top:4px;">
+                        <i class="fas fa-check-circle"></i> Incluindo peças já pagas
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Rodapé
+    const rodape = `
+        <div style="margin-top:24px; padding-top:16px; border-top:2px solid #e0e0e0; font-size:11px; color:#888; text-align:right;">
+            <div><strong>Contrato:</strong> ${data.contrato}</div>
+            <div style="margin-top:4px;"><strong>Gerado em:</strong> ${data.data_geracao}</div>
+        </div>
+    `;
+
+    area.innerHTML = cardsResumo + secaoVeiculos + secaoEstoque + secaoDanosSeveros + 
+                     secaoCustosOperacionais + secaoPecas + secaoTotal + rodape;
+}
+
+function gerarSecaoPecas(periodos, total1, total2, total3, totalGeral) {
+    const nomePeriodos = ['01 a 10', '11 a 20', '21 ao último dia'];
+    let linhasPeriodos = '';
+
+    periodos.forEach((periodo, idx) => {
+        const totalPeriodo = [total1, total2, total3][idx];
+        const statusPago = `
+            <span style="display:inline-flex; align-items:center; gap:6px; background:#d4edda; color:#155724; 
+                         padding:4px 10px; border-radius:12px; font-size:11px; font-weight:600;">
+                <i class="fas fa-check-circle"></i> FATURADO
+            </span>
+        `;
+        
+        linhasPeriodos += `
+            <tr style="background:#f8f9fa;">
+                <td colspan="3" style="padding:12px; font-weight:600; font-size:12px; color:#495057;">
+                    <i class="fas fa-calendar-day"></i> Período ${idx + 1}: ${nomePeriodos[idx]}
+                </td>
+                <td style="text-align:right; padding:12px;">
+                    ${statusPago}
+                </td>
+                <td style="text-align:right; padding:12px; font-weight:700; color:#28a745;">
+                    R$ ${formatarMoeda(totalPeriodo)}
+                </td>
+            </tr>
+        `;
+
+        // Adicionar detalhes das peças por prefixo
+        if (periodo.success && periodo.prefixos && periodo.prefixos.length > 0) {
+            periodo.prefixos.forEach(prefixo => {
+                const osUnicas = [...new Set(prefixo.itens.map(i => i.numero_os))].join(', ');
+                const totalInsumos = prefixo.itens.reduce((acc, item) => acc + (item.quantidade || 0), 0);
+
+                linhasPeriodos += `
+                    <tr style="background:#ffffff;">
+                        <td style="padding-left:32px; font-size:11px; color:#6c757d;">
+                            Prefixo ${prefixo.prefixo}
+                        </td>
+                        <td style="font-size:11px; color:#6c757d;">
+                            ${prefixo.modelo}
+                        </td>
+                        <td style="font-size:11px; color:#6c757d;">
+                            OS: ${[...new Set(prefixo.itens.map(i => i.numero_os))].join(', ')}
+                        </td>
+                        <td style="text-align:center; font-size:11px; color:#6c757d;">
+                            ${totalInsumos} 
+                        </td>   
+                        <td style="text-align:right; font-size:11px; color:#6c757d;">
+                            R$ ${formatarMoeda(prefixo.subtotal || 0)}
+                        </td>
+                    </tr>
+                `;
+            });
+        } else {
+            linhasPeriodos += `
+                <tr>
+                    <td colspan="5" style="text-align:center; padding:12px; font-size:11px; color:#999; font-style:italic;">
+                        Nenhuma peça faturada neste período
+                    </td>
+                </tr>
+            `;
+        }
+    });
+
+    return `
+        <div class="section">
+            <div class="section-title">
+                <i class="fas fa-cog" style="margin-right:8px;"></i>
+                5. Faturamento de Peças (Valores já Pagos)
+            </div>
+            <div style="background:#e7f3ff; border-left:4px solid #2196F3; padding:16px 20px; border-radius:8px; margin-bottom:16px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <i class="fas fa-info-circle" style="font-size:24px; color:#0d47a1;"></i>
+                    <div>
+                        <div style="font-weight:600; color:#0d47a1; margin-bottom:4px;">Informação Importante</div>
+                        <div style="font-size:13px; color:#1565c0;">
+                            Os valores de peças são faturados e pagos a cada 10 dias (3 vezes por mês).
+                            Os valores abaixo são apresentados apenas para fins contábeis e de auditoria,
+                            <strong>pois já foram devidamente quitados</strong> nas respectivas datas de faturamento.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Período / Veículo</th>
+                            <th>Modelo</th>
+                            <th>Nº OS</th>
+                            <th style="text-align:center;">Insumos Utilizados</th>
+                            <th style="text-align:right;">Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>${linhasPeriodos}</tbody>
+                    <tfoot>
+                        <tr style="background:#28a745; color:#fff; font-weight:700;">
+                            <td colspan="4" style="padding:10px 12px;">
+                                SUBTOTAL PEÇAS (Já Pagas - Fins Contábeis)
+                            </td>
+                            <td style="text-align:right; padding:10px 12px;">R$ ${formatarMoeda(totalGeral)}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    `;
+}
+
+document.addEventListener('DOMContentLoaded', carregarFaturamento);
 </script>
 {% endblock %}
