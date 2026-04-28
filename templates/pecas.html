@@ -200,10 +200,8 @@ function renderizarFaturamento(data, pecasPeriodos) {
                 <div style="display:flex; align-items:center; gap:12px;">
                     <i class="fas fa-info-circle" style="font-size:24px; color:#0c5460;"></i>
                     <div>
-                        <div style="font-weight:600; color:#0c5460; margin-bottom:4px;">Em Discussão Estratégica</div>
-                        <div style="font-size:13px; color:#0c5460;">
-                            Os custos operacionais estão sendo debatidos pela cúpula estratégica da empresa.
-                            Aguardando veredito para inclusão neste relatório.
+                        <div style="font-weight:600; color:#0c5460; margin-bottom:4px;">Em Análise </div>
+
                         </div>
                     </div>
                 </div>
@@ -312,7 +310,7 @@ function renderizarFaturamento(data, pecasPeriodos) {
 
     // Total Geral
     const secaoTotal = `
-        <div class="section" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius:12px; padding:24px; margin-top:32px;">
+        <div class="section" style="background:linear-gradient(135deg, #2a6f2f 0%, #3fa746 100%); border-radius:12px; padding:24px; margin-top:32px;">
             <div style="display:flex; justify-content:space-between; align-items:center; color:#fff;">
                 <div>
                     <div style="font-size:14px; opacity:0.9; margin-bottom:4px;">TOTAL GERAL DO FATURAMENTO</div>
@@ -321,7 +319,7 @@ function renderizarFaturamento(data, pecasPeriodos) {
                 <div style="text-align:right;">
                     <div style="font-size:42px; font-weight:700;">R$ ${formatarMoeda(totalGeral)}</div>
                     <div style="font-size:13px; opacity:0.9; margin-top:4px;">
-                        <i class="fas fa-check-circle"></i> Incluindo peças já pagas
+                        <i class="fas fa-check-circle"></i> Incluindo peças faturadas
                     </div>
                 </div>
             </div>
@@ -418,7 +416,7 @@ function gerarSecaoPecas(periodos, total1, total2, total3, totalGeral) {
                         <div style="font-size:13px; color:#1565c0;">
                             Os valores de peças são faturados e pagos a cada 10 dias (3 vezes por mês).
                             Os valores abaixo são apresentados apenas para fins contábeis e de auditoria,
-                            <strong>pois já foram devidamente quitados</strong> nas respectivas datas de faturamento.
+                            <strong>pois já foram devidamente faturados</strong>.
                         </div>
                     </div>
                 </div>
@@ -438,7 +436,7 @@ function gerarSecaoPecas(periodos, total1, total2, total3, totalGeral) {
                     <tfoot>
                         <tr style="background:#28a745; color:#fff; font-weight:700;">
                             <td colspan="4" style="padding:10px 12px;">
-                                SUBTOTAL PEÇAS (Já Pagas - Fins Contábeis)
+                                SUBTOTAL PEÇAS (Já Faturado - Fins Contábeis)
                             </td>
                             <td style="text-align:right; padding:10px 12px;">R$ ${formatarMoeda(totalGeral)}</td>
                         </tr>
