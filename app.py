@@ -24,14 +24,6 @@ MESES = {
     9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro'
 }
 
-Resumo_executivo = [
-    {"Item": "Serviços de manutenção (fixo mensal)", "Descrição": "Operação completa", "Valor (R$)": 818496.00},
-    {"Item": "Gestão de peças", "Descrição": "Taxa fixa mensal", "Valor (R$)": 8000.00},
-    {"Item": "Peças e componentes", "Descrição": "Conforme consumo", "Valor (R$)": None},       # virá da API de peças
-    {"Item": "Serviços extraordinários", "Descrição": "Sob demanda", "Valor (R$)": None},       # vem das OS
-]
-
-
 # 3.1
 Infra = [
      {"subitem": "Instalações físicas", "Descrição": "Galpão, área técnica, utilidades", "Critério de Apropriação": "Rateio mensal", "% estimado": 0.08, "Valor (R$)": 65479.68},
@@ -160,96 +152,32 @@ gestao_chamados = [
     }
 ]
 
-#tabela de notas fiscasis
-
-notas_fiscais = [
+valores_onibus = [
     {
-        "NF": "000000005",
-        "Valor": 4539.98,
-        "OS": 17
+        "ONIBUS": "BYD/MPOLO TORINO E A",
+        "valor": 7991.00
     },
     {
-        "NF": "000000004",
-        "Valor": 624.00,
-        "OS": 30
+        "ONIBUS": "BYD/MPOLO ATTIVI E A",
+        "valor": 7991.00
     },
     {
-        "NF": "000000003",
-        "Valor": 624.00,
-        "OS": 36
+        "ONIBUS": "IND/MILLENNIUM EL A",
+        "valor": 9317.00
     },
     {
-        "NF": "000000010",
-        "Valor": 936.00,
-        "OS": 59
+        "ONIBUS": "VOLV/MPOLO ATTIVI EA",
+        "valor": 6662.00
     },
     {
-        "NF": "000000007",
-        "Valor": 624.00,
-        "OS": 72
+        "ONIBUS": "VOLV/MPOLO ATTIVI EB",
+        "valor": 7200.00
     },
     {
-        "NF": "000000015",
-        "Valor": 624.00,
-        "OS": 73
-    },
-    {
-        "NF": "000000011",
-        "Valor": 624.00,
-        "OS": 74
-    },
-    {
-        "NF": "000000008",
-        "Valor": 624.00,
-        "OS": 75
-    },
-    {
-        "NF": "000000009",
-        "Valor": 624.00,
-        "OS": 76
-    },
-    {
-        "NF": "000000012",
-        "Valor": 624.00,
-        "OS": 77
-    },
-    {
-        "NF": "000000014",
-        "Valor": 624.00,
-        "OS": 78
-    },
-    {
-        "NF": "000000017",
-        "Valor": 4539.98,
-        "OS": 80
-    },
-    {
-        "NF": "000000006",
-        "Valor": 319.60,
-        "OS": 82
-    },
-    {
-        "NF": "000000016",
-        "Valor": 9079.97,
-        "OS": 79
-    },
-    {
-        "NF": "000000018",
-        "Valor": 409.6,
-        "OS": 81
-    },
-    {
-        "NF": "000000019",
-        "Valor": 624.00,
-        "OS": 83
-    },
-    {
-        "NF": "000000020",
-        "Valor": 90,
-        "OS": 84
+        "ONIBUS": "IND/MILLENNIUM ES U",
+        "valor": 9048.00
     }
 ]
-
 def obter_custos_operacionais():
     categorias = [
         {"titulo": "Infraestrutura da Oficina", "itens": Infra},
@@ -280,17 +208,24 @@ def obter_dados(mes, ano, periodo='1'):
 
     data_inicio, data_fim, data_faturamento = calcular_periodo_pecas(periodo, mes, ano)
 
+    # Ajustar o filtro de data para funcionar corretamente
     ordens_raw = buscar_supabase(
         "Ordens_Servico",
-        f"&status=eq.FECHADA&data_fechamento=gte.{data_inicio}T00:00:00&data_fechamento=lte.{data_fim}T23:59:59"
-    )
-    
+        f"&status=eq.FECHADA&data_fechamento=gte.{data_inicio}&data_fechamento=lte.{data_fim}"
+                                )
+    print(f"DEBUG - Período: {data_inicio} a {data_fim}")
+    print(f"DEBUG - Total de OS encontradas: {len(ordens_raw)}")
+    if len(ordens_raw) > 0:
+        print(f"DEBUG - Primeira OS: {ordens_raw[0].get('numero_sequencial')}, Data: {ordens_raw[0].get('data_fechamento')}")
+
     encaminhamentos_raw = buscar_supabase("OS_Encaminhamentos")
     frota_raw = buscar_supabase("View_Frota_Completa")
     apoio_raw = buscar_supabase("Apoio_Etapas")
     # ✅ BUSCAR SOLICITAÇÕES DE SERVIÇO
     solicitacoes_raw = buscar_supabase("Solicitacao_Servicos")
     nf_raw = buscar_supabase("OS_NF")
+    
+
     
 
     # índice de apoio por codigo_etapa
@@ -525,6 +460,14 @@ def pecas():
                            ano_atual=hoje.year,
                            pagina_ativa='pecas')
 
+@app.route('/faturamento-mensal')
+def faturamento_mensal():
+    hoje = date.today()
+    return render_template('faturamento_mensal.html',
+                           mes_atual=hoje.month,
+                           ano_atual=hoje.year,
+                           pagina_ativa='faturamento_mensal')
+
 @app.route('/api/relatorio')
 def api_relatorio():
     mes = request.args.get('mes', type=int) or date.today().month
@@ -533,18 +476,18 @@ def api_relatorio():
 
     dados = obter_dados(mes, ano, periodo)
     custos = obter_custos_operacionais()
-    resumo_executivo = []
-    for item in Resumo_executivo:
-            i = dict(item)
-            if i["Item"] == "Serviços extraordinários":
-                i["Valor (R$)"] = dados['resumo']['total_faturamento']
-            elif i["Item"] == "Peças e componentes":
-                i["Valor (R$)"] = dados['resumo']['total_faturamento']  # ainda aguardando API
-            resumo_executivo.append(i)
+    # resumo_executivo = []
+    # for item in Resumo_executivo:
+    #         i = dict(item)
+    #         if i["Item"] == "Serviços extraordinários":
+    #             i["Valor (R$)"] = dados['resumo']['total_faturamento']
+    #         elif i["Item"] == "Peças e componentes":
+    #             i["Valor (R$)"] = dados['resumo']['total_faturamento']  # ainda aguardando API
+    #         resumo_executivo.append(i)
 
     return jsonify({
         'success': True,
-        'resumo_executivo': resumo_executivo,
+        # 'resumo_executivo': resumo_executivo,
         'ordens': dados['ordens'],
         'modelos': dados['modelos'],
         'periodo': dados['periodo'],
@@ -557,111 +500,257 @@ def api_relatorio():
     })
 
 def calcular_periodo_pecas(periodo, mes, ano):
-    ultimo_dia_num = calendar.monthrange(ano, mes)[1]
-    if periodo == "1":
-        return f"{ano}-{mes:02d}-01", f"{ano}-{mes:02d}-10", f"{ano}-{mes:02d}-10"
-    elif periodo == "2":
-        return f"{ano}-{mes:02d}-11", f"{ano}-{mes:02d}-20", f"{ano}-{mes:02d}-20"
+
+    if periodo == '1':
+        data_inicio = f"{ano}-{mes:02d}-01"
+        data_fim    = f"{ano}-{mes:02d}-10"
+    elif periodo == '2':
+        data_inicio = f"{ano}-{mes:02d}-11"
+        data_fim    = f"{ano}-{mes:02d}-20"
+    elif periodo == '3':
+        data_inicio = f"{ano}-{mes:02d}-21"
+        data_fim    = f"{ano}-{mes:02d}-{calendar.monthrange(ano, mes)[1]}"
+    
+    # ✅ Adicione esse bloco:
+    elif periodo == '4':
+        data_inicio = f"{ano}-{mes:02d}-01"
+        data_fim    = f"{ano}-{mes:02d}-{calendar.monthrange(ano, mes)[1]}"
+    
+    data_faturamento = data_fim  # ajuste conforme sua lógica
+    return data_inicio, data_fim, data_faturamento
+
+@app.route('/api/faturamento-mensal')
+def api_faturamento_mensal():
+    mes = request.args.get('mes', type=int) or date.today().month
+    ano = request.args.get('ano', type=int) or date.today().year
+    
+    # Buscar todos os veículos da frota
+    frota_raw = buscar_supabase("View_Frota_Completa")
+    
+    # Criar dicionário de valores por modelo (usando nome_bem)
+    valores_por_modelo = {v["ONIBUS"].strip(): v["valor"] for v in valores_onibus}
+    
+    # Processar veículos e associar valores
+    veiculos_com_custo = []
+    total_veiculos = 0
+    
+    for veiculo in frota_raw:
+        nome_bem = veiculo.get('nome_bem', '')  # Mudou de 'modelo' para 'nome_bem'
+        modelo = veiculo.get('modelo', '').strip()  # Mantém modelo para exibição
+        prefixo = veiculo.get('prefixo', '')
+        placa = veiculo.get('placa', '')
+        
+        # Buscar valor correspondente ao nome_bem (que deve bater com a coluna ONIBUS)
+        valor_mensal = valores_por_modelo.get(modelo, 0)
+        
+        veiculos_com_custo.append({
+                'prefixo': prefixo,
+                'placa': placa,
+                'modelo': modelo,
+                'nome_bem': nome_bem,
+                'valor_mensal': valor_mensal
+                    # Será 0 se não encontrar na tabela
+            })
+        total_veiculos += valor_mensal
+    
+    # Ordenar por prefixo
+    veiculos_com_custo.sort(key=lambda x: x['prefixo'])
+    
+    # Valor fixo do estoque de peças
+    estoque_pecas = 8000.00
+
+    # ===== BUSCAR DANOS SEVEROS DO MÊS =====
+    # Calcular primeiro e último dia do mês
+    primeiro_dia = f"{ano}-{mes:02d}-01"
+    if mes == 12:
+        ultimo_dia = f"{ano}-12-31"
     else:
-        return f"{ano}-{mes:02d}-21", f"{ano}-{mes:02d}-{ultimo_dia_num}", f"{ano}-{mes:02d}-{ultimo_dia_num}"
+        proximo_mes = f"{ano}-{mes+1:02d}-01"
+        from datetime import datetime, timedelta
+        ultimo_dia_dt = datetime.strptime(proximo_mes, "%Y-%m-%d") - timedelta(days=1)
+        ultimo_dia = ultimo_dia_dt.strftime("%Y-%m-%d")
+
+    # Buscar OS com dano severo fechadas no mês
+    os_danos_severos = buscar_supabase(
+        "Ordens_Servico",
+        f"&status=eq.FECHADA&is_dano_severo=eq.true&data_fechamento=gte.{primeiro_dia}&data_fechamento=lte.{ultimo_dia}"
+    )
+
+    print(f"🔥 Danos severos encontrados: {len(os_danos_severos)}")
+
+# Buscar encaminhamentos com insumos dessas OS
+    danos_severos_lista = []
+    total_danos_severos = 0
+
+    if os_danos_severos:
+        numeros_os_severos = [str(os['numero_sequencial']) for os in os_danos_severos]
+        
+        enc_severos = buscar_supabase(
+            "OS_Encaminhamentos",
+            f"&numero_os_direto=in.({','.join(numeros_os_severos)})&insumo_descricao=not.is.null"
+        )
+    
+    # Agrupar por OS
+        for enc in enc_severos:
+            num_os = enc.get('numero_os_direto')
+            os_dados = next((os for os in os_danos_severos if str(os['numero_sequencial']) == num_os), None)
+            
+            if not os_dados:
+                continue
+        
+            prefixo = os_dados.get('prefixo_veiculo', 'SEM-PREFIXO')
+            dados_frota = frota_dict.get(prefixo, {'modelo': 'N/A'})
+            
+            valor_item = float(enc.get('insumo_valor_total') or 0)
+            total_danos_severos += valor_item
+        
+            danos_severos_lista.append({
+                'prefixo': prefixo,
+                'numero_os': num_os,
+                'modelo': dados_frota['modelo'],
+                'defeito_relatado': os_dados.get('defeito_relatado', '-'),
+                'valor': valor_item
+        })
+
+    # Ordenar por prefixo
+    danos_severos_lista.sort(key=lambda x: x['prefixo'])    
+    
+    
+    return jsonify({
+        'success': True,
+        'veiculos': veiculos_com_custo,
+        'total_veiculos': total_veiculos,
+        'estoque_pecas': estoque_pecas,
+        'danos_severos': danos_severos_lista,
+        'total_danos_severos': total_danos_severos,
+        'nome_mes': MESES.get(mes, ''),
+        'mes': mes,
+        'ano': ano,
+        'contrato': '001/2025',
+        'data_geracao': datetime.now().strftime("%d/%m/%Y %H:%M")
+    })
 
 @app.route('/api/pecas')
 def api_pecas():
-    mes = request.args.get('mes', type=int) or date.today().month
-    ano = request.args.get('ano', type=int) or date.today().year
-    periodo = request.args.get('periodo', '1')
+    try:
+        mes = request.args.get('mes', type=int) or date.today().month
+        ano = request.args.get('ano', type=int) or date.today().year
+        periodo = request.args.get('periodo', '1')
 
-    data_inicio, data_fim, data_faturamento = calcular_periodo_pecas(periodo, mes, ano)
+        data_inicio, data_fim, data_faturamento = calcular_periodo_pecas(periodo, mes, ano)
 
-    # ✅ Filtra OS FECHADAS no período correto
+    # Buscar notas fiscais do Supabase (ou usar lista vazia se não existir a tabela)
+    # Buscar notas fiscais da tabela OS_NF
+        nf_raw = buscar_supabase("OS_NF")
+        notas_por_os = {}
+        for nf in nf_raw:
+            num_os_nota = str(nf.get('os'))
+            if num_os_nota not in notas_por_os:
+                notas_por_os[num_os_nota] = []
+            
+            numero_nota = nf.get('nf', '-')
+            if numero_nota != '-':
+                notas_por_os[num_os_nota].append(str(numero_nota))
+    except Exception as e:
+        import traceback
+        print("ERRO em api_pecas:", traceback.format_exc())  # ✅ mostra o erro completo no terminal
+        return jsonify({'success': False, 'erro': str(e)}), 500
+
+    # Buscar OS FECHADAS no período
     ordens_raw = buscar_supabase(
         "Ordens_Servico",
-        f"&status=eq.FECHADA&data_fechamento=gte.{data_inicio}T00:00:00&data_fechamento=lte.{data_fim}T23:59:59"
+        f"&status=eq.FECHADA&data_fechamento=gte.{data_inicio}&data_fechamento=lte.{data_fim}"
     )
+    
+    print(f"DEBUG - Período: {data_inicio} a {data_fim}")
+    print(f"DEBUG - Total de OS encontradas: {len(ordens_raw)}")
 
     if not ordens_raw:
         return jsonify({
             'success': True,
             'prefixos': [],
-            'periodo': {
-                'inicio': data_inicio,
-                'fim': data_fim,
-                'faturamento': data_faturamento,
-                'label': {'1': '01 a 10', '2': '11 a 20', '3': '21 ao último dia'}.get(periodo, '')
-            },
-            'resumo': {'total_geral': 0, 'total_itens': 0},
-            'mes': mes, 'ano': ano,
+            'periodo': {'inicio': data_inicio, 'fim': data_fim, 'faturamento': data_faturamento},
+            'resumo': {'total_itens': 0, 'total_geral': 0},
             'data_geracao': datetime.now().strftime("%d/%m/%Y %H:%M")
         })
 
-    # Pega os números das OS encontradas para filtrar encaminhamentos
-    numeros_os = [str(o['numero_sequencial']) for o in ordens_raw]
-    ordens_por_num = {str(o['numero_sequencial']): o for o in ordens_raw}
-
-    # ✅ Busca encaminhamentos COM insumo apenas das OS do período
+    numeros_os = [str(os['numero_sequencial']) for os in ordens_raw]
+    
+    # Buscar encaminhamentos COM insumo
     encaminhamentos_raw = buscar_supabase(
         "OS_Encaminhamentos",
         f"&numero_os_direto=in.({','.join(numeros_os)})&insumo_descricao=not.is.null"
     )
+    
+    print(f"📦 Total de encaminhamentos COM INSUMO: {len(encaminhamentos_raw)}")
 
+    # Buscar dados da frota para pegar placa e modelo
     frota_raw = buscar_supabase("View_Frota_Completa")
-    frota_por_prefixo = {str(v['prefixo']): v for v in frota_raw}
+    frota_dict = {v.get('prefixo'): {'placa': v.get('placa'), 'modelo': v.get('modelo')} 
+                for v in frota_raw}
 
+    # Agrupar por prefixo
+# Agrupar por prefixo
+# Agrupar por prefixo
     prefixos = {}
-    for e in encaminhamentos_raw:
-        num_os = str(e.get('numero_os_direto', ''))
-        os_dados = ordens_por_num.get(num_os, {})
-        prefixo = str(os_dados.get('prefixo_veiculo', '-'))
-        veiculo = frota_por_prefixo.get(prefixo, {})
+    total_itens = 0
+    total_geral = 0
 
-        prefixos.setdefault(prefixo, {
-            "prefixo": prefixo,
-            "placa": veiculo.get('placa', '-'),
-            "modelo": veiculo.get('modelo', '-'),
-            "itens": []
+    for enc in encaminhamentos_raw:
+        num_os = enc.get('numero_os_direto')
+        
+        os_dados = next((os for os in ordens_raw if str(os['numero_sequencial']) == num_os), None)
+        if not os_dados:
+            continue
+            
+        prefixo = os_dados.get('prefixo_veiculo', 'SEM-PREFIXO')
+        
+        if os_dados.get('is_dano_severo', False):
+            continue
+
+        nfs_da_os = notas_por_os.get(num_os, [])
+        numero_nf = ', '.join(nfs_da_os) if nfs_da_os else '-'
+        valor_item = float(enc.get('insumo_valor_total') or 0)
+
+        if prefixo not in prefixos:
+            frota_info = frota_dict.get(prefixo, {})
+            prefixos[prefixo] = {
+                'prefixo': prefixo,
+                'placa': frota_info.get('placa', '-'),
+                'modelo': frota_info.get('modelo', '-'),
+                'itens': [],
+                'subtotal': 0
+            }
+
+        prefixos[prefixo]['itens'].append({
+            'numero_os': num_os,
+            'descricao': enc.get('insumo_descricao', '-'),
+            'quantidade': enc.get('insumo_quantidade') or 0,
+            'valor_total': valor_item,
+            'data_fim': formatar_data(os_dados.get('data_fechamento')),
+            'numero_nf': numero_nf,
+            'defeito_relatado': os_dados.get('defeito_relatado', '-')
         })
+            
+        prefixos[prefixo]['subtotal'] += valor_item
+        total_itens += 1
+        total_geral += valor_item
 
-        nf_dados = next((nf for nf in notas_fiscais if str(nf['OS']) == num_os), None)
-
-        prefixos[prefixo]["itens"].append({
-            "numero_os": num_os,
-            "descricao": e.get('insumo_descricao', '-'),
-            "quantidade": e.get('insumo_quantidade') or 0,
-            "valor_total": float(e.get('insumo_valor_total') or 0),
-            "data_fim": formatar_data(os_dados.get('data_fechamento')),
-            "numero_nf": nf_dados['NF'] if nf_dados else '-',
-            "valor_nf": float(nf_dados['Valor']) if nf_dados else None
-        })
-
-        total_geral = 0
-        for p in prefixos.values():
-            os_vistas = set()
-            subtotal = 0
-            for i in p['itens']:
-                num_os = i['numero_os']
-                if num_os not in os_vistas:
-                    os_vistas.add(num_os)
-                    if i['valor_nf'] is not None:
-                        subtotal += i['valor_nf']
-                    # Se não tem NF, não soma nada
-            p['subtotal'] = subtotal
-            total_geral += p['subtotal']
+    # ✅ FORA do for - mesma indentação do 'for'
+    lista_prefixos = sorted(prefixos.values(), key=lambda x: x['prefixo'])
 
     return jsonify({
         'success': True,
-        'prefixos': list(prefixos.values()),
+        'prefixos': lista_prefixos,
         'periodo': {
             'inicio': data_inicio,
             'fim': data_fim,
-            'faturamento': data_faturamento,
-            'label': {'1': '01 a 10', '2': '11 a 20', '3': '21 ao último dia'}.get(periodo, '')
+            'faturamento': data_faturamento
         },
         'resumo': {
-            'total_geral': total_geral,
-            'total_itens': sum(float(i['quantidade'] or 0) for p in prefixos.values() for i in p['itens'])
+            'total_itens': total_itens,
+            'total_geral': total_geral
         },
-        'mes': mes,
-        'ano': ano,
         'data_geracao': datetime.now().strftime("%d/%m/%Y %H:%M")
     })
 
