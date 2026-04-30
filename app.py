@@ -26,53 +26,41 @@ MESES = {
 
 # 3.1
 Infra = [
-     {"subitem": "Instalações físicas", "Descrição": "Galpão, área técnica, utilidades", "Critério de Apropriação": "Rateio mensal", "% estimado": 0.08, "Valor (R$)": 65479.68},
-     {"subitem": "Energia elétrica", "Descrição": "Operação equipamentos e recarga", "Critério de Apropriação": "Consumo estimado", "% estimado": 0.04, "Valor (R$)": 32739.84},
-     {"subitem": "Segurança e vigilância", "Descrição": "Patrimonial e operacional", "Critério de Apropriação": "Rateio", "% estimado": 0.01, "Valor (R$)": 8184.96},
-     {"subitem": "Manutenção predial", "Descrição": "Conservação da estrutura", "Critério de Apropriação": "Rateio", "% estimado": 0.01, "Valor (R$)": 8184.96}
+     {"subitem": "Instalações físicas", "Descrição": "Galpão, área técnica, utilidades"},
+     {"subitem": "Energia elétrica", "Descrição": "Operação equipamentos e recarga"},
+     {"subitem": "Segurança e vigilância", "Descrição": "Patrimonial e operacional"},
+     {"subitem": "Manutenção predial", "Descrição": "Conservação da estrutura"}
 ]
 
 
 #3.2
 Pessoal_tecnico_especializado = [
-    {"Subitem": "Engenheiros e supervisores", "Descrição": "Coordenação técnica", "Critério": "Custo direto", "% estimado": 0.06, "Valor (R$)": 49109.76},
-    {"Subitem": "Técnicos manutenção elétrica", "Descrição": "Alta tensão e baterias", "Critério": "Custo direto", "% estimado": 0.12, "Valor (R$)": 98219.52},
-    {"Subitem": "Técnicos mecânicos", "Descrição": "Sistemas mecânicos", "Critério": "Custo direto", "% estimado": 0.1, "Valor (R$)": 81849.60},
-    {"Subitem": "Equipe borracharia", "Descrição": "Pneus e rodagem", "Critério": "Custo direto", "% estimado": 0.03, "Valor (R$)": 24554.88},
-    {"Subitem": "Equipe funilaria/pintura", "Descrição": "Pequenas avarias", "Critério": "Custo direto", "% estimado": 0.02, "Valor (R$)": 16369.92},
-    {"Subitem": "Plantão 24h", "Descrição": "Turnos e sobreaviso", "Critério": "Adicional operacional", "% estimado": 0.06, "Valor (R$)": 49109.76},
-    {"Subitem": "Encargos trabalhistas", "Descrição": "INSS, FGTS, etc.", "Critério": "Proporcional", "% estimado": 0.1, "Valor (R$)": 81849.60}
+    {"Subitem": "Engenheiros e supervisores", "Descrição": "Coordenação técnica"},
+    {"Subitem": "Técnicos manutenção elétrica", "Descrição": "Alta tensão e baterias"},
+    {"Subitem": "Técnicos mecânicos", "Descrição": "Sistemas mecânicos"},
+    {"Subitem": "Equipe borracharia", "Descrição": "Pneus e rodagem"},
+    {"Subitem": "Equipe funilaria/pintura", "Descrição": "Pequenas avarias"},
+    {"Subitem": "Plantão 24h", "Descrição": "Turnos e sobreaviso"},
+    {"Subitem": "Encargos trabalhistas", "Descrição": "INSS, FGTS, etc."}
 ]
 
 #3.3
 maquinario_equipamentos = [
     {
         "Subitem": "Equipamentos diagnóstico",
-        "Descrição": "Scanners, software",
-        "Critério": "Depreciação",
-        "% estimado": 0.04,
-        "Valor (R$)": 32739.84
+        "Descrição": "Scanners, software"
     },
     {
         "Subitem": "Equipamentos alta tensão",
-        "Descrição": "Ferramentas HV",
-        "Critério": "Depreciação",
-        "% estimado": 0.03,
-        "Valor (R$)": 24554.88
+        "Descrição": "Ferramentas HV"
     },
     {
         "Subitem": "Equipamentos mecânicos",
-        "Descrição": "Elevadores, compressores",
-        "Critério": "Depreciação",
-        "% estimado": 0.04,
-        "Valor (R$)": 32739.84
+        "Descrição": "Elevadores, compressores"
     },
     {
         "Subitem": "Equipamentos gás/biometano",
-        "Descrição": "Testes e segurança",
-        "Critério": "Depreciação",
-        "% estimado": 0.02,
-        "Valor (R$)": 16369.92
+        "Descrição": "Testes e segurança"
     }
 ]
 
@@ -81,24 +69,15 @@ maquinario_equipamentos = [
 ferramentaria = [
     {
         "Subitem": "Ferramentas gerais",
-        "Descrição": "Uso contínuo",
-        "Critério": "Rateio",
-        "% estimado": 0.02,
-        "Valor (R$)": 16369.92
+        "Descrição": "Uso contínuo"
     },
     {
         "Subitem": "Ferramentas especiais",
-        "Descrição": "Sistemas elétricos/gás",
-        "Critério": "Rateio",
-        "% estimado": 0.02,
-        "Valor (R$)": 16369.92
+        "Descrição": "Sistemas elétricos/gás"
     },
     {
         "Subitem": "Reposição e desgaste",
-        "Descrição": "Consumo",
-        "Critério": "Rateio",
-        "% estimado": 0.01,
-        "Valor (R$)": 8184.96
+        "Descrição": "Consumo"
     }
 ]
 
@@ -106,24 +85,15 @@ ferramentaria = [
 volante = [
     {
         "Subitem": "Veículo utilitário",
-        "Descrição": "Deslocamento técnico",
-        "Critério": "Rateio",
-        "% estimado": 0.02,
-        "Valor (R$)": 16369.92
+        "Descrição": "Deslocamento técnico"
     },
     {
         "Subitem": "Combustível/energia",
-        "Descrição": "Operação",
-        "Critério": "Consumo",
-        "% estimado": 0.01,
-        "Valor (R$)": 8184.96
+        "Descrição": "Operação"
     },
     {
         "Subitem": "Manutenção veículo",
-        "Descrição": "Preventiva/corretiva",
-        "Critério": "Rateio",
-        "% estimado": 0.01,
-        "Valor (R$)": 8184.96
+        "Descrição": "Preventiva/corretiva"
     }
 ]
 
@@ -131,24 +101,15 @@ volante = [
 gestao_chamados = [
     {
         "Subitem": "Plataforma digital",
-        "Descrição": "Gestão de chamados",
-        "Critério": "Licença",
-        "% estimado": 0.03,
-        "Valor (R$)": 24554.88
+        "Descrição": "Gestão de chamados"
     },
     {
         "Subitem": "Monitoramento e TI",
-        "Descrição": "Suporte técnico",
-        "Critério": "Rateio",
-        "% estimado": 0.02,
-        "Valor (R$)": 16369.92
+        "Descrição": "Suporte técnico"
     },
     {
         "Subitem": "Relatórios e BI",
-        "Descrição": "Indicadores e controle",
-        "Critério": "Rateio",
-        "% estimado": 0.01,
-        "Valor (R$)": 8184.96
+        "Descrição": "Indicadores e controle"
     }
 ]
 
@@ -178,6 +139,38 @@ valores_onibus = [
         "valor": 9048.00
     }
 ]
+
+resumo_composição = [
+    {
+        "Item": "Infraestrutura",
+        "Percentual": "14%"
+    },
+    {
+        "Item": "Pessoal",
+        "Percentual": "49%"
+    },
+    {
+        "Item": "Maquinário",
+        "Percentual": "13%"
+    },
+    {
+        "Item": "Ferramentaria",
+        "Percentual": "5%"
+    },
+    {
+        "Item": "Atendimento volante",
+        "Percentual": "4%"
+    },
+    {
+        "Item": "Sistema de gestão",
+        "Percentual": "6%"
+    },
+    {
+        "Item": "Margem operacional, riscos, impostos indiretos e contingências",
+        "Percentual": "9%"
+    }
+]
+
 def obter_custos_operacionais():
     categorias = [
         {"titulo": "Infraestrutura da Oficina", "itens": Infra},
@@ -200,11 +193,17 @@ def obter_custos_operacionais():
 
 def buscar_supabase(tabela, filtros=""):
     url = f"{SUPABASE_URL}/rest/v1/{tabela}?select=*{filtros}"
-    r = requests.get(url, headers=HEADERS)
-    return r.json() if r.status_code == 200 else []
+    try:
+        r = requests.get(url, headers=HEADERS, timeout=15)  # ← timeout de 15s
+        return r.json() if r.status_code == 200 else []
+    except requests.exceptions.Timeout:
+        print(f"TIMEOUT ao buscar tabela: {tabela}")
+        return []
+    except Exception as e:
+        print(f"ERRO ao buscar {tabela}: {e}")
+        return []
 
-
-def obter_dados(mes, ano, periodo='1'):
+def obter_dados(mes, ano, periodo='1',apenas_com_insumos=True):
 
     data_inicio, data_fim, data_faturamento = calcular_periodo_pecas(periodo, mes, ano)
 
@@ -213,17 +212,31 @@ def obter_dados(mes, ano, periodo='1'):
         "Ordens_Servico",
         f"&status=eq.FECHADA&data_fechamento=gte.{data_inicio}&data_fechamento=lte.{data_fim}"
                                 )
-    print(f"DEBUG - Período: {data_inicio} a {data_fim}")
-    print(f"DEBUG - Total de OS encontradas: {len(ordens_raw)}")
-    if len(ordens_raw) > 0:
-        print(f"DEBUG - Primeira OS: {ordens_raw[0].get('numero_sequencial')}, Data: {ordens_raw[0].get('data_fechamento')}")
+        # Se não houver OS, retorna vazio logo
+    if not ordens_raw:
+        return {"ordens": [], "modelos": {}, "periodo": {
+            "inicio": data_inicio, "fim": data_fim,
+            "mes": MESES.get(mes, ''), "ano": ano
+        }, "resumo": {"total_faturamento": 0, "total_os": 0}}
+    
+    # Pega os números das OS e prefixos encontrados
+    numeros_os = [str(o['numero_sequencial']) for o in ordens_raw]
+    prefixos   = [str(o['prefixo_veiculo'])   for o in ordens_raw]
+    numeros_ss = [str(o['numero_ss'])         for o in ordens_raw if o.get('numero_ss')]
 
-    encaminhamentos_raw = buscar_supabase("OS_Encaminhamentos")
-    frota_raw = buscar_supabase("View_Frota_Completa")
-    apoio_raw = buscar_supabase("Apoio_Etapas")
-    # ✅ BUSCAR SOLICITAÇÕES DE SERVIÇO
-    solicitacoes_raw = buscar_supabase("Solicitacao_Servicos")
-    nf_raw = buscar_supabase("OS_NF")
+
+
+    # Monta filtro no formato aceito pelo Supabase
+    os_lista      = ",".join(numeros_os)
+    prefixo_lista = ",".join(set(prefixos))
+    ss_lista      = ",".join(set(numeros_ss))
+
+    # Busca apenas os registros relacionados às OS do período
+    encaminhamentos_raw = buscar_supabase("OS_Encaminhamentos",  f"&numero_os_direto=in.({os_lista})")
+    frota_raw           = buscar_supabase("View_Frota_Completa", f"&prefixo=in.({prefixo_lista})")
+    apoio_raw           = buscar_supabase("Apoio_Etapas")  # ← essa é pequena, pode ficar inteira
+    solicitacoes_raw    = buscar_supabase("Solicitacao_Servicos", f"&numero_ss=in.({ss_lista})")
+    nf_raw              = buscar_supabase("OS_NF", f"&os=in.({os_lista})")
     
 
     
@@ -308,7 +321,7 @@ def obter_dados(mes, ano, periodo='1'):
         })
 
     # Filtrar apenas OSs com valor > 0
-    ordens_com_valor = [o for o in ordens if o['valor_total'] > 0]
+    ordens_com_valor = [o for o in ordens if o['valor_total'] > 0] if apenas_com_insumos else ordens
 
     # Criar modelos apenas com OSs filtradas
     modelos = {}
@@ -442,7 +455,6 @@ def api_relatorio_csv():
         headers={'Content-Disposition': f'attachment; filename="{nome_arquivo}"'}
     )
 
-
 @app.route('/')
 def index():
     hoje = date.today()
@@ -468,13 +480,14 @@ def faturamento_mensal():
                            ano_atual=hoje.year,
                            pagina_ativa='faturamento_mensal')
 
+
 @app.route('/api/relatorio')
 def api_relatorio():
     mes = request.args.get('mes', type=int) or date.today().month
     ano = request.args.get('ano', type=int) or date.today().year
     periodo = request.args.get('periodo', '1')
 
-    dados = obter_dados(mes, ano, periodo)
+    dados = obter_dados(mes, ano, periodo, apenas_com_insumos=True)
     custos = obter_custos_operacionais()
     # resumo_executivo = []
     # for item in Resumo_executivo:
@@ -519,6 +532,47 @@ def calcular_periodo_pecas(periodo, mes, ano):
     data_faturamento = data_fim  # ajuste conforme sua lógica
     return data_inicio, data_fim, data_faturamento
 
+@app.route('/api/extratos')
+def api_extratos():
+    mes = request.args.get('mes', type=int) or date.today().month
+    ano = request.args.get('ano', type=int) or date.today().year
+
+    dados = obter_dados(mes, ano, periodo = '4', apenas_com_insumos=False)
+    custos = obter_custos_operacionais()
+
+    return jsonify({
+        'success': True,
+        'ordens': dados['ordens'],
+        'modelos': dados['modelos'],
+        'periodo': dados['periodo'],
+        'resumo': dados['resumo'],
+        'custos_operacionais': custos,   # novo
+        'nome_mes': MESES.get(mes, ''),
+        'ano': ano,
+        'contrato': '001/2025',
+        'data_geracao': datetime.now().strftime("%d/%m/%Y %H:%M")
+    })
+
+def calcular_periodo_pecas(periodo, mes, ano):
+
+    if periodo == '1':
+        data_inicio = f"{ano}-{mes:02d}-01"
+        data_fim    = f"{ano}-{mes:02d}-10"
+    elif periodo == '2':
+        data_inicio = f"{ano}-{mes:02d}-11"
+        data_fim    = f"{ano}-{mes:02d}-20"
+    elif periodo == '3':
+        data_inicio = f"{ano}-{mes:02d}-21"
+        data_fim    = f"{ano}-{mes:02d}-{calendar.monthrange(ano, mes)[1]}"
+    
+    # ✅ Adicione esse bloco:
+    elif periodo == '4':
+        data_inicio = f"{ano}-{mes:02d}-01"
+        data_fim    = f"{ano}-{mes:02d}-{calendar.monthrange(ano, mes)[1]}"
+    
+    data_faturamento = data_fim  # ajuste conforme sua lógica
+    return data_inicio, data_fim, data_faturamento
+
 @app.route('/api/faturamento-mensal')
 def api_faturamento_mensal():
     mes = request.args.get('mes', type=int) or date.today().month
@@ -526,6 +580,10 @@ def api_faturamento_mensal():
     
     # Buscar todos os veículos da frota
     frota_raw = buscar_supabase("View_Frota_Completa")
+    
+    # Criar dicionário da frota para uso posterior (linha 663)
+    frota_dict = {v.get('prefixo'): {'placa': v.get('placa'), 'modelo': v.get('modelo')} 
+                  for v in frota_raw}
     
     # Criar dicionário de valores por modelo (usando nome_bem)
     valores_por_modelo = {v["ONIBUS"].strip(): v["valor"] for v in valores_onibus}
@@ -753,6 +811,15 @@ def api_pecas():
         },
         'data_geracao': datetime.now().strftime("%d/%m/%Y %H:%M")
     })
+@app.route('/extratos')
+def extratos():
+    from datetime import date
+    hoje = date.today()
+    return render_template('extratoos.html',
+        pagina_ativa='extratos',
+        mes_atual=hoje.month,
+        ano_atual=hoje.year
+    )
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
