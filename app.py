@@ -171,24 +171,6 @@ resumo_composição = [
     }
 ]
 
-def obter_custos_operacionais():
-    categorias = [
-        {"titulo": "Infraestrutura da Oficina", "itens": Infra},
-        {"titulo": "Pessoal Técnico Especializado(24h)", "itens": Pessoal_tecnico_especializado},
-        {"titulo": "Maquinário e Equipamentos", "itens": maquinario_equipamentos},
-        {"titulo": "Ferramentaria", "itens": ferramentaria},
-        {"titulo": "Veículo de Atendimento Volante", "itens": volante},
-        {"titulo": "Sistema de Gestão e Chamados", "itens": gestao_chamados},
-    ]
-
-    total_geral = 0
-    for cat in categorias:
-        subtotal = sum(item["Valor (R$)"] for item in cat["itens"])
-        cat["subtotal"] = subtotal
-        total_geral += subtotal
-
-    return {"categorias": categorias, "total_geral": total_geral}
-
 
 
 def buscar_supabase(tabela, filtros=""):
@@ -488,15 +470,7 @@ def api_relatorio():
     periodo = request.args.get('periodo', '1')
 
     dados = obter_dados(mes, ano, periodo, apenas_com_insumos=True)
-    custos = obter_custos_operacionais()
-    # resumo_executivo = []
-    # for item in Resumo_executivo:
-    #         i = dict(item)
-    #         if i["Item"] == "Serviços extraordinários":
-    #             i["Valor (R$)"] = dados['resumo']['total_faturamento']
-    #         elif i["Item"] == "Peças e componentes":
-    #             i["Valor (R$)"] = dados['resumo']['total_faturamento']  # ainda aguardando API
-    #         resumo_executivo.append(i)
+
 
     return jsonify({
         'success': True,
@@ -505,7 +479,6 @@ def api_relatorio():
         'modelos': dados['modelos'],
         'periodo': dados['periodo'],
         'resumo': dados['resumo'],
-        'custos_operacionais': custos,   # novo
         'nome_mes': MESES.get(mes, ''),
         'ano': ano,
         'contrato': '001/2025',
@@ -538,7 +511,6 @@ def api_extratos():
     ano = request.args.get('ano', type=int) or date.today().year
 
     dados = obter_dados(mes, ano, periodo = '4', apenas_com_insumos=False)
-    custos = obter_custos_operacionais()
 
     return jsonify({
         'success': True,
@@ -546,7 +518,6 @@ def api_extratos():
         'modelos': dados['modelos'],
         'periodo': dados['periodo'],
         'resumo': dados['resumo'],
-        'custos_operacionais': custos,   # novo
         'nome_mes': MESES.get(mes, ''),
         'ano': ano,
         'contrato': '001/2025',
