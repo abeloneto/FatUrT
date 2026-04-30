@@ -3,6 +3,96 @@
 {% block title %}MAAS Faturamento Mensal{% endblock %}
 
 {% block conteudo %}
+<style>
+    .show-on-print-only {
+    display: none !important;
+}
+@media print {
+        .no-print {
+        display: none !important;
+    }
+    .print-only {
+        display: block !important;
+    }
+    /* reset de cores para p&b sóbrio */
+    tfoot {
+            display: table-row-group !important;
+        }
+        
+        /* Força o rodapé SEMPRE no final da tabela */
+    table {
+            page-break-inside: auto;
+        }
+    .modelo-titulo {
+        background: none !important;
+        border-left: 3px solid #000 !important;
+        color: #000 !important;
+        font-size: 11px !important;
+        padding: 6px 10px !important;
+        border-radius: 0 !important;
+    }
+    .prefixo-header {
+        background: none !important;
+        border-top: 1px solid #999 !important;
+        border-bottom: 1px solid #999 !important;
+        font-size: 10px !important;
+        padding: 5px 10px !important;
+        gap: 16px !important;
+    }
+    .badge-tipo {
+        background: none !important;
+        color: #000 !important;
+        border: 1px solid #000 !important;
+        padding: 1px 6px !important;
+        font-size: 9px !important;
+        border-radius: 3px !important;
+    }
+    .os-row:hover { background: none !important; }
+
+    /* nunca mostra insumos expandidos na impressão — a tabela resumida já cobre */
+    .insumos-row { display: none !important; }
+
+    /* totais por modelo impressão */
+    .total-modelo-row td {
+        font-size: 10px !important;
+        border-top: 1.5px solid #000 !important;
+        padding: 5px 10px !important;
+    }
+    .total-contrato-row td {
+        font-size: 11px !important;
+        border-top: 2px solid #000 !important;
+        padding: 6px 10px !important;
+    }
+
+    /* cabeçalho de impressão */
+    .print-header {
+        display: block !important;
+        margin-bottom: 16px;
+    }
+    .print-header-title {
+        font-size: 14px;
+        font-weight: 700;
+        text-align: right;
+        color: #000;
+    }
+    .print-header-periodo {
+        font-size: 11px;
+        color: #000;
+        border-bottom: 1.5px solid #000;
+        padding-bottom: 6px;
+        margin-bottom: 8px;
+    }
+    .print-contrato {
+        font-size: 11px;
+        font-weight: 700;
+        color: #000;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 4px;
+        margin-bottom: 8px;
+    }
+}
+</style>
+
 <div class="control-bar">
     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
         <div class="select-wrapper">
@@ -78,6 +168,107 @@ function carregarFaturamento() {
     });
 }
 
+function gerarLinhasCustosOperacionais() {
+    const categorias = [
+        {
+            item: 'Infraestrutura', pct: 14, cor: '#185FA5',
+            rows: [
+                { sub: 'Instalações físicas',    desc: 'Galpão, área técnica, utilidades'},
+                { sub: 'Energia elétrica',        desc: 'Operação equipamentos e recarga'},
+                { sub: 'Segurança e vigilância',  desc: 'Patrimonial e operacional'      },
+                { sub: 'Manutenção predial',      desc: 'Conservação da estrutura'       },
+            ]
+        },
+        {
+            item: 'Pessoal técnico especializado', pct: 49, cor: '#0F6E56',
+            rows: [
+                { sub: 'Engenheiros e supervisores',      desc: 'Coordenação técnica'     },
+                { sub: 'Técnicos manutenção elétrica',    desc: 'Alta tensão e baterias'  },
+                { sub: 'Técnicos mecânicos',              desc: 'Sistemas mecânicos'      },
+                { sub: 'Equipe borracharia',              desc: 'Pneus e rodagem'         },
+                { sub: 'Equipe funilaria/pintura',        desc: 'Pequenas avarias'        },
+                { sub: 'Plantão 24h',                    desc: 'Turnos e sobreaviso'     },
+                { sub: 'Encargos trabalhistas',           desc: 'INSS, FGTS, etc.'        },
+            ]
+        },
+        {
+            item: 'Maquinário e equipamentos', pct: 13, cor: '#533AB7',
+            rows: [
+                { sub: 'Equipamentos diagnóstico',    desc: 'Scanners, software' },
+                { sub: 'Equipamentos alta tensão',    desc: 'Ferramentas HV'},
+                { sub: 'Equipamentos mecânicos',      desc: 'Elevadores, compressores'},
+                { sub: 'Equipamentos gás/biometano',  desc: 'Testes e segurança'},
+            ]
+        },
+        {
+            item: 'Ferramentaria', pct: 5, cor: '#854F0B',
+            rows: [
+                { sub: 'Ferramentas gerais',    desc: 'Uso contínuo',          },
+                { sub: 'Ferramentas especiais', desc: 'Sistemas elétricos/gás' },
+                { sub: 'Reposição e desgaste',  desc: 'Consumo',               },
+            ]
+        },
+        {
+            item: 'Atendimento volante', pct: 4, cor: '#993C1D',
+            rows: [
+                { sub: 'Veículo utilitário',   desc: 'Deslocamento técnico'  },
+                { sub: 'Combustível/energia',  desc: 'Operação'           },
+                { sub: 'Manutenção veículo',   desc: 'Preventiva/corretiva'  },
+            ]
+        },
+        {
+            item: 'Sistema de gestão de chamados', pct: 6, cor: '#3B6D11',
+            rows: [
+                { sub: 'Plataforma digital',  desc: 'Gestão de chamados' },
+                { sub: 'Monitoramento e TI',  desc: 'Suporte técnico'         },
+                { sub: 'Relatórios e BI',     desc: 'Indicadores e controle'  },
+            ]
+        },
+        {
+            item: 'Margem operacional, riscos, impostos e contingências', pct: 9, cor: '#A32D2D',
+            rows: []
+        },
+    ];
+
+    let html = '';
+
+    categorias.forEach(cat => {
+        // Linha da categoria principal
+        html += `
+            <tr style="background:#f4f8fc;">
+                <td style="padding:9px 12px; font-weight:700; font-size:12px; color:#103a48; border-bottom:1px solid #d8e8f0;">
+                    <span style="display:inline-block; width:9px; height:9px; border-radius:50%; background:${cat.cor}; margin-right:8px; vertical-align:middle;"></span>
+                    ${cat.item}
+                </td>
+                <td style="padding:9px 12px; border-bottom:1px solid #d8e8f0;"></td>
+                <td style="padding:9px 12px; text-align:center; font-weight:700; font-size:12px; color:${cat.cor}; border-bottom:1px solid #d8e8f0;">
+                    ${cat.pct}%
+                </td>
+            </tr>`;
+
+        // Linhas dos subitens
+        cat.rows.forEach((r, idx) => {
+            const isUltimo = idx === cat.rows.length - 1;
+            const borderStyle = isUltimo ? '2px solid #d8e8f0' : '1px solid #eef4f8';
+            
+            html += `
+                <tr style="background:#ffffff;">
+                    <td style="padding:7px 12px 7px 32px; font-size:11px; color:#333; border-bottom:${borderStyle};">
+                        ${r.sub}
+                    </td>
+                    <td style="padding:7px 12px; font-size:11px; color:#555; border-bottom:${borderStyle};">
+                        ${r.desc}
+                    </td>
+                    <td style="padding:7px 12px; font-size:11px; color:#888; font-style:italic; border-bottom:${borderStyle};">
+                        
+                    </td>
+                </tr>`;
+        });
+    });
+
+    return html;
+}
+
 function renderizarFaturamento(data, pecasPeriodos) {
     const area = document.getElementById('relatorio-area');
     
@@ -88,7 +279,32 @@ function renderizarFaturamento(data, pecasPeriodos) {
     const totalPecasPeriodo3 = pecasPeriodos[2].resumo?.total_geral || 0;
     const totalPecas = totalPecasPeriodo1 + totalPecasPeriodo2 + totalPecasPeriodo3;
     
-    const totalGeral = totalVeiculos + data.estoque_pecas + totalPecas;
+    const totalGeral = totalVeiculos + data.estoque_pecas ;
+
+    const cabecalhoTotal = `
+        <div class="print-only" style="margin-bottom: 30px; padding: 25px; 
+                    border-radius: 12px; color: white;">
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <div style="flex: 1;">
+                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px; 
+                                text-transform: uppercase; letter-spacing: 1px;">
+                        📊 Faturamento Total - ${data.nome_mes}/${data.ano}
+                    </div>
+                    <div style="font-size: 32px; font-weight: 800; line-height: 1;">
+                        R$ ${formatarMoeda(totalGeral)}
+                    </div>
+                    <div style="font-size: 13px; opacity: 0.85; margin-top: 10px;">
+                        <i class="fas fa-info-circle"></i> 
+                        Valor total do faturamento mensal (custos fixos + estoque)
+                    </div>
+                </div>
+                <div style="text-align: right; font-size: 14px; opacity: 0.9;">
+                    <div style="margin-bottom: 5px;">📅 ${data.contrato}</div>
+                    <div>🕐 ${data.data_geracao}</div>
+                </div>
+            </div>
+        </div>
+    `;
 
     // Cards de resumo
     const cardsResumo = `
@@ -119,9 +335,9 @@ function renderizarFaturamento(data, pecasPeriodos) {
     data.veiculos.forEach(v => {
         linhasVeiculos += `
             <tr>
-                <td>${v.prefixo}</td>
-                <td>${v.placa}</td>
-                <td>${v.modelo}</td>
+                <td style="text-align:center;">${v.prefixo}</td>
+                <td style="text-align:center;">${v.placa}</td>
+                <td style="text-align:center;">${v.modelo}</td>
                 <td style="text-align:right; font-weight:600;">R$ ${formatarMoeda(v.valor_mensal)}</td>
             </tr>`;
     });
@@ -171,7 +387,7 @@ function renderizarFaturamento(data, pecasPeriodos) {
                     </thead>
                     <tbody>
                         <tr>
-                            <td>Manutenção de Estoque de Peças</td>
+                            <td>Gestão de Estoque de Peças</td>
                             <td style="text-align:right; font-weight:600;">R$ ${formatarMoeda(data.estoque_pecas)}</td>
                         </tr>
                     </tbody>
@@ -196,36 +412,22 @@ function renderizarFaturamento(data, pecasPeriodos) {
                 <i class="fas fa-cogs" style="margin-right:8px;"></i>
                 4. Custos Operacionais
             </div>
-            <div style="background:#d1ecf1; border-left:4px solid #17a2b8; padding:16px 20px; border-radius:8px; margin-bottom:16px;">
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <i class="fas fa-info-circle" style="font-size:24px; color:#0c5460;"></i>
-                    <div>
-                        <div style="font-weight:600; color:#0c5460; margin-bottom:4px;">Em Análise </div>
-
-                        </div>
-                    </div>
-                </div>
-            </div>
             <div class="table-wrapper">
                 <table>
                     <thead>
                         <tr>
-                            <th>Categoria</th>
-                            <th style="text-align:right;">Valor</th>
+                            <th style="width:38%;">Categoria / Subitem</th>
+                            <th style="width:30%;">Descrição</th>
+                            <th style="width:10%;">%</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td colspan="2" style="text-align:center; color:#999; padding:20px;">
-                                <i class="fas fa-clock" style="font-size:32px; margin-bottom:8px; display:block;"></i>
-                                Aguardando definição
-                            </td>
-                        </tr>
+                        ${gerarLinhasCustosOperacionais()}
                     </tbody>
                     <tfoot>
-                        <tr style="background:#6c757d; color:#fff; font-weight:700;">
-                            <td style="padding:10px 12px;">SUBTOTAL CUSTOS OPERACIONAIS</td>
-                            <td style="text-align:right; padding:10px 12px;">R$ 0,00</td>
+                        <tr style="background:#4fb16e; color:#fff; font-weight:700;">
+                            <td colspan="2" style="padding:10px 12px;">PERCENTUAL TOTAL</td>
+                            <td style="text-align:right; padding:10px 12px;">100%</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -310,7 +512,7 @@ function renderizarFaturamento(data, pecasPeriodos) {
 
     // Total Geral
     const secaoTotal = `
-        <div class="section" style="background:linear-gradient(135deg, #2a6f2f 0%, #3fa746 100%); border-radius:12px; padding:24px; margin-top:32px;">
+        <div class="section no-print" style="background:linear-gradient(135deg, #2a6f2f 0%, #3fa746 100%); border-radius:12px; padding:24px; margin-top:32px;">
             <div style="display:flex; justify-content:space-between; align-items:center; color:#fff;">
                 <div>
                     <div style="font-size:14px; opacity:0.9; margin-bottom:4px;">TOTAL GERAL DO FATURAMENTO</div>
@@ -319,7 +521,7 @@ function renderizarFaturamento(data, pecasPeriodos) {
                 <div style="text-align:right;">
                     <div style="font-size:42px; font-weight:700;">R$ ${formatarMoeda(totalGeral)}</div>
                     <div style="font-size:13px; opacity:0.9; margin-top:4px;">
-                        <i class="fas fa-check-circle"></i> Incluindo peças faturadas
+                        <i class="fa-solid fa-circle-exclamation"></i> Total desconsiderando valores já faturados (peças e danos severos)
                     </div>
                 </div>
             </div>
@@ -334,7 +536,7 @@ function renderizarFaturamento(data, pecasPeriodos) {
         </div>
     `;
 
-    area.innerHTML = cardsResumo + secaoVeiculos + secaoEstoque + secaoDanosSeveros + 
+    area.innerHTML = cabecalhoTotal + cardsResumo + secaoVeiculos + secaoEstoque + secaoDanosSeveros + 
                      secaoCustosOperacionais + secaoPecas + secaoTotal + rodape;
 }
 
@@ -348,6 +550,9 @@ function gerarSecaoPecas(periodos, total1, total2, total3, totalGeral) {
             <span style="display:inline-flex; align-items:center; gap:6px; background:#d4edda; color:#155724; 
                          padding:4px 10px; border-radius:12px; font-size:11px; font-weight:600;">
                 <i class="fas fa-check-circle"></i> FATURADO
+                                <td style="text-align:right; padding:12px; font-weight:700; color:#28a745;">
+                     R$ ${formatarMoeda(totalPeriodo)}
+                </td>
             </span>
         `;
         
@@ -355,12 +560,6 @@ function gerarSecaoPecas(periodos, total1, total2, total3, totalGeral) {
             <tr style="background:#f8f9fa;">
                 <td colspan="3" style="padding:12px; font-weight:600; font-size:12px; color:#495057;">
                     <i class="fas fa-calendar-day"></i> Período ${idx + 1}: ${nomePeriodos[idx]}
-                </td>
-                <td style="text-align:right; padding:12px;">
-                    ${statusPago}
-                </td>
-                <td style="text-align:right; padding:12px; font-weight:700; color:#28a745;">
-                    R$ ${formatarMoeda(totalPeriodo)}
                 </td>
             </tr>
         `;
@@ -391,6 +590,16 @@ function gerarSecaoPecas(periodos, total1, total2, total3, totalGeral) {
                     </tr>
                 `;
             });
+                linhasPeriodos += `
+                    <tr style="background:#e9f7ef; border-bottom:3px solid #dceeff;">
+                        <td colspan="4" style="padding:10px 12px; font-weight:700; font-size:12px; color:#155724;">
+                            Subtotal Período
+                        </td>
+                        <td style="text-align:right; padding:10px 12px; font-weight:700; color:#28a745;">
+                            R$ ${formatarMoeda(totalPeriodo)}
+                        </td>
+                    </tr>
+                `;
         } else {
             linhasPeriodos += `
                 <tr>
@@ -406,14 +615,14 @@ function gerarSecaoPecas(periodos, total1, total2, total3, totalGeral) {
         <div class="section">
             <div class="section-title">
                 <i class="fas fa-cog" style="margin-right:8px;"></i>
-                5. Faturamento de Peças (Valores já Pagos)
+                5. Faturamento de Peças (Valores já Faturados)
             </div>
-            <div style="background:#e7f3ff; border-left:4px solid #2196F3; padding:16px 20px; border-radius:8px; margin-bottom:16px;">
-                <div style="display:flex; align-items:center; gap:12px;">
+            <div class="section no-print"; style="background:#e7f3ff; border-left:4px solid #2196F3; padding:16px 20px; border-radius:8px; margin-bottom:16px;">
+                <div class="section no-print"; style="display:flex; align-items:center; gap:12px;">
                     <i class="fas fa-info-circle" style="font-size:24px; color:#0d47a1;"></i>
                     <div>
-                        <div style="font-weight:600; color:#0d47a1; margin-bottom:4px;">Informação Importante</div>
-                        <div style="font-size:13px; color:#1565c0;">
+                        <div class="section no-print"; style="font-weight:600; color:#0d47a1; margin-bottom:4px;">Informação Importante</div>
+                        <div class="section no-print"; style="font-size:13px; color:#1565c0;">
                             Os valores de peças são faturados e pagos a cada 10 dias (3 vezes por mês).
                             Os valores abaixo são apresentados apenas para fins contábeis e de auditoria,
                             <strong>pois já foram devidamente faturados</strong>.
