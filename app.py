@@ -194,6 +194,8 @@ def obter_dados(mes, ano, periodo='1',apenas_com_insumos=True):
         "Ordens_Servico",
         f"&status=eq.FECHADA&data_fechamento=gte.{data_inicio}&data_fechamento=lte.{data_fim}"
                                 )
+    if ordens_raw:
+        ordens_raw = [o for o in ordens_raw if len(str(o.get('prefixo_veiculo', ''))) == 4]
         # Se não houver OS, retorna vazio logo
     if not ordens_raw:
         return {"ordens": [], "modelos": {}, "periodo": {
@@ -551,6 +553,8 @@ def api_faturamento_mensal():
     
     # Buscar todos os veículos da frota
     frota_raw = buscar_supabase("View_Frota_Completa")
+
+    frota_raw = [v for v in frota_raw if len(str(v.get('prefixo', ''))) == 4]
     
     # Criar dicionário da frota para uso posterior (linha 663)
     frota_dict = {v.get('prefixo'): {'placa': v.get('placa'), 'modelo': v.get('modelo')} 
@@ -604,6 +608,7 @@ def api_faturamento_mensal():
         "Ordens_Servico",
         f"&status=eq.FECHADA&is_dano_severo=eq.true&data_fechamento=gte.{primeiro_dia}&data_fechamento=lte.{ultimo_dia}"
     )
+    os_danos_severos = [os for os in os_danos_severos if len(str(os.get('prefixo_veiculo', ''))) == 4]
 
     print(f"🔥 Danos severos encontrados: {len(os_danos_severos)}")
 
@@ -691,6 +696,8 @@ def api_pecas():
         f"&status=eq.FECHADA&data_fechamento=gte.{data_inicio}&data_fechamento=lte.{data_fim}"
     )
     
+    ordens_raw = [o for o in ordens_raw if len(str(o.get('prefixo_veiculo', ''))) == 4]
+
     print(f"DEBUG - Período: {data_inicio} a {data_fim}")
     print(f"DEBUG - Total de OS encontradas: {len(ordens_raw)}")
 
@@ -715,6 +722,9 @@ def api_pecas():
 
     # Buscar dados da frota para pegar placa e modelo
     frota_raw = buscar_supabase("View_Frota_Completa")
+
+    frota_raw = [v for v in frota_raw if len(str(v.get('prefixo', ''))) == 4]
+
     frota_dict = {v.get('prefixo'): {'placa': v.get('placa'), 'modelo': v.get('modelo')} 
                 for v in frota_raw}
 
