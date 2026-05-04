@@ -185,7 +185,7 @@ def buscar_supabase(tabela, filtros=""):
         print(f"ERRO ao buscar {tabela}: {e}")
         return []
 
-def obter_dados(mes, ano, periodo='1',apenas_com_insumos=True):
+def obter_dados(mes, ano, periodo='1', apenas_com_insumos=True, excluir_danos_severos=False):
 
     data_inicio, data_fim, data_faturamento = calcular_periodo_pecas(periodo, mes, ano)
 
@@ -196,13 +196,17 @@ def obter_dados(mes, ano, periodo='1',apenas_com_insumos=True):
                                 )
     if ordens_raw:
         ordens_raw = [o for o in ordens_raw if len(str(o.get('prefixo_veiculo', ''))) == 4]
+
+    if excluir_danos_severos:
+        ordens_raw = [o for o in ordens_raw if not o.get('is_dano_severo', False)]
+
         # Se não houver OS, retorna vazio logo
     if not ordens_raw:
         return {"ordens": [], "modelos": {}, "periodo": {
             "inicio": data_inicio, "fim": data_fim,
             "mes": MESES.get(mes, ''), "ano": ano
         }, "resumo": {"total_faturamento": 0, "total_os": 0}}
-    
+
     # Pega os números das OS e prefixos encontrados
     numeros_os = [str(o['numero_sequencial']) for o in ordens_raw]
     prefixos   = [str(o['prefixo_veiculo'])   for o in ordens_raw]
@@ -471,7 +475,7 @@ def api_relatorio():
     ano = request.args.get('ano', type=int) or date.today().year
     periodo = request.args.get('periodo', '1')
 
-    dados = obter_dados(mes, ano, periodo, apenas_com_insumos=True)
+    dados = obter_dados(mes, ano, periodo, apenas_com_insumos=True, excluir_danos_severos=True)
 
 
     return jsonify({
@@ -512,7 +516,7 @@ def api_extratos():
     mes = request.args.get('mes', type=int) or date.today().month
     ano = request.args.get('ano', type=int) or date.today().year
 
-    dados = obter_dados(mes, ano, periodo = '4', apenas_com_insumos=False)
+    dados = obter_dados(mes, ano, periodo='4', apenas_com_insumos=False, excluir_danos_severos=False)
 
     return jsonify({
         'success': True,
