@@ -394,7 +394,8 @@
                             if (os.is_dano_severo) badgeClass = 'badge-dano';
 
                             const badgeLabel = os.is_dano_severo ? 'Dano Severo' : (os.tarefas || '-');
-                            const notasFiscais = os.notas_fiscais || '-';                            
+                            const notasFiscais = (os.notas_fiscais && os.notas_fiscais !== '-') ? os.notas_fiscais : null;                         
+                
 
                             // linha expandível de insumos
                             let insumoTabela = '';
@@ -451,9 +452,9 @@
                                     const insId = `ins-${os.numero_os}`;
                                     const km = os.km_atual || '-';
                                     
-                                    const notasHtml = notasFiscais !== '-' 
+                                    const notasHtml = notasFiscais 
                                         ? `<span class="notas-fiscais-badge"> ${notasFiscais}</span>`
-                                        : '<span class="sem-nota">-</span>';
+                                        : '<span style="color: #dc3545; font-weight: bold;">⚠ Pendente</span>';
 
                                     
                                     linhasOS += `
