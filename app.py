@@ -3,8 +3,9 @@ from datetime import datetime, date
 import requests
 import calendar
 import pandas as pd
-import io
+import io 
 import csv
+from io import StringIO
 from flask import Response 
 
 
@@ -175,8 +176,9 @@ resumo_composição = [
 
 def buscar_supabase(tabela, filtros=""):
     url = f"{SUPABASE_URL}/rest/v1/{tabela}?select=*{filtros}"
+    headers_com_range = {**HEADERS, "Range-Unit": "items", "Range": "0-9999"}
     try:
-        r = requests.get(url, headers=HEADERS, timeout=15)  # ← timeout de 15s
+        r = requests.get(url, headers=headers_com_range, timeout=15)
         return r.json() if r.status_code == 200 else []
     except requests.exceptions.Timeout:
         print(f"TIMEOUT ao buscar tabela: {tabela}")
@@ -346,76 +348,60 @@ def formatar_data(dt_str):
 def api_relatorio_csv():
     mes = request.args.get('mes', type=int) or date.today().month
     ano = request.args.get('ano', type=int) or date.today().year
-    periodo = request.args.get('periodo', '1')
+    periodo = request.args.get('periodo', '4')  # ✅ Alterado para '4' (mês completo)
 
-    dados = obter_dados(mes, ano, periodo)
+    # ✅ BUSCAR TODAS AS OS (sem filtro de apenas_com_insumos)
+    dados = obter_dados(mes, ano, periodo, apenas_com_insumos=False, excluir_danos_severos=False)
 
     output = io.StringIO()
     writer = csv.writer(output, delimiter=';')
 
-    # cabeçalho
+    # Cabeçalho
     writer.writerow(['Nº OS', 'Nota Fiscal', 'Abertura', 'Fechamento', 'Prefixo', 'Placa',
-                     'Modelo', 'Família', 'Tipo de Serviço', 'Descrição Serviço',
+                     'Modelo', 'Família', 'Hodômetro', 'Tipo de Serviço', 'Descrição Serviço',
                      'Defeito Relatado', 'Dano Severo', 'Item/Peça',
                      'Quantidade', 'Valor Unitário (R$)', 'Valor Total (R$)'])
 
-    # Buscar encaminhamentos
-    numeros_os = [str(os['numero_os']) for os in dados['ordens'] if os['valor_total'] > 0]
+    # ✅ Buscar TODOS os encaminhamentos (com e sem insumos)
+    numeros_os = [str(os['numero_os']) for os in dados['ordens']]
     
     encaminhamentos_raw = []
     if numeros_os:
+        # ✅ REMOVIDO O FILTRO &insumo_descricao=not.is.null
         encaminhamentos_raw = buscar_supabase(
             "OS_Encaminhamentos",
-            f"&numero_os_direto=in.({','.join(numeros_os)})&insumo_descricao=not.is.null"
+            f"&numero_os_direto=in.({','.join(numeros_os)})"
         )
 
     # Agrupar encaminhamentos por OS
     encaminhamentos_por_os = {}
     for e in encaminhamentos_raw:
         num_os = str(e.get('numero_os_direto', ''))
-        if num_os not in encaminhamentos_por_os:
-            encaminhamentos_por_os[num_os] = []
         
-        quantidade = float(e.get('insumo_quantidade') or 0)
-        valor_total = float(e.get('insumo_valor_total') or 0)
-        valor_unitario = round(valor_total / quantidade , 2) if quantidade > 0 else 0
-        
-        encaminhamentos_por_os[num_os].append({
-            'descricao': e.get('insumo_descricao', '-'),
-            'quantidade': quantidade,
-            'valor_unitario': valor_unitario,
-            'valor_total': valor_total
-        })
-
-    # Escrever linhas
-    for os in dados['ordens']:
-        if os['valor_total'] > 0:
-            num_os = str(os['numero_os'])
-            encaminhamentos = encaminhamentos_por_os.get(num_os, [])
+        # ✅ Só adiciona se tiver insumo
+        if e.get('insumo_descricao'):
+            if num_os not in encaminhamentos_por_os:
+                encaminhamentos_por_os[num_os] = []
             
-            if encaminhamentos:
-                # Se tem encaminhamentos, uma linha por item/peça
-                for enc in encaminhamentos:
-                    writer.writerow([
-                        os['numero_os'],
-                        os['notas_fiscais'],
-                        os['data_abertura'],
-                        os['data_fechamento'],
-                        os['prefixo'],
-                        os['placa'],
-                        os['modelo'],
-                        os['familia'],
-                        os['tarefas'],
-                        os['descricao'],
-                        os['defeito_relatado'],
-                        'Sim' if os['is_dano_severo'] else 'Não',
-                        enc['descricao'],  # Item/Peça
-                        str(enc['quantidade']).replace('.', ','),  # Quantidade
-                        str(enc['valor_unitario']).replace('.', ','),  # Valor Unitário
-                        str(enc['valor_total']).replace('.', ',')  # Valor Total do item
-                    ])
-            else:
-                # Se não tem encaminhamentos, uma linha sem detalhes de peças
+            quantidade = float(e.get('insumo_quantidade') or 0)
+            valor_total = float(e.get('insumo_valor_total') or 0)
+            valor_unitario = round(valor_total / quantidade, 2) if quantidade > 0 else 0
+            
+            encaminhamentos_por_os[num_os].append({
+                'descricao': e.get('insumo_descricao', '-'),
+                'quantidade': quantidade,
+                'valor_unitario': valor_unitario,
+                'valor_total': valor_total
+            })
+
+    # ✅ Escrever TODAS as linhas (com e sem peças)
+    for os in dados['ordens']:
+        num_os = str(os['numero_os'])
+        encaminhamentos = encaminhamentos_por_os.get(num_os, [])
+        
+        if encaminhamentos:
+            # Se tem encaminhamentos, uma linha por item/peça
+            for enc in encaminhamentos:
                 writer.writerow([
                     os['numero_os'],
                     os['notas_fiscais'],
@@ -425,15 +411,37 @@ def api_relatorio_csv():
                     os['placa'],
                     os['modelo'],
                     os['familia'],
+                    os['km_atual'],  # ✅ Adicionado hodômetro
                     os['tarefas'],
                     os['descricao'],
                     os['defeito_relatado'],
                     'Sim' if os['is_dano_severo'] else 'Não',
-                    '-',  # Item/Peça
-                    '-',  # Quantidade
-                    '-',  # Valor Unitário
-                    str(os['valor_total']).replace('.', ',')  # Valor Total
+                    enc['descricao'],  # Item/Peça
+                    str(enc['quantidade']).replace('.', ','),
+                    str(enc['valor_unitario']).replace('.', ','),
+                    str(enc['valor_total']).replace('.', ',')
                 ])
+        else:
+            # ✅ Se não tem encaminhamentos, uma linha com "Mão de obra"
+            writer.writerow([
+                os['numero_os'],
+                os['notas_fiscais'],
+                os['data_abertura'],
+                os['data_fechamento'],
+                os['prefixo'],
+                os['placa'],
+                os['modelo'],
+                os['familia'],
+                os['km_atual'],  # ✅ Adicionado hodômetro
+                os['tarefas'],
+                os['descricao'],
+                os['defeito_relatado'],
+                'Sim' if os['is_dano_severo'] else 'Não',
+                'Mão de obra',  # ✅ Item/Peça
+                '-',  # Quantidade
+                '-',  # Valor Unitário
+                '-'   # ✅ Valor Total vazio para OS sem peças
+            ])
 
     nome_arquivo = f"extrato_manutencao_{MESES.get(mes,'').lower()}_{ano}.csv"
 
@@ -533,19 +541,19 @@ def api_extratos():
 def calcular_periodo_pecas(periodo, mes, ano):
 
     if periodo == '1':
-        data_inicio = f"{ano}-{mes:02d}-01"
-        data_fim    = f"{ano}-{mes:02d}-10"
+        data_inicio = f"{ano}-{mes:02d}-01T00:00:00"
+        data_fim    = f"{ano}-{mes:02d}-10T23:59:59"
     elif periodo == '2':
-        data_inicio = f"{ano}-{mes:02d}-11"
-        data_fim    = f"{ano}-{mes:02d}-20"
+        data_inicio = f"{ano}-{mes:02d}-11T00:00:00"
+        data_fim    = f"{ano}-{mes:02d}-20T23:59:59"
     elif periodo == '3':
-        data_inicio = f"{ano}-{mes:02d}-21"
-        data_fim    = f"{ano}-{mes:02d}-{calendar.monthrange(ano, mes)[1]}"
-    
-    # ✅ Adicione esse bloco:
+        data_inicio = f"{ano}-{mes:02d}-21T00:00:00"
+        ultimo_dia  = calendar.monthrange(ano, mes)[1]
+        data_fim    = f"{ano}-{mes:02d}-{ultimo_dia}T23:59:59"
     elif periodo == '4':
-        data_inicio = f"{ano}-{mes:02d}-01"
-        data_fim    = f"{ano}-{mes:02d}-{calendar.monthrange(ano, mes)[1]}"
+        data_inicio = f"{ano}-{mes:02d}-01T00:00:00"
+        ultimo_dia  = calendar.monthrange(ano, mes)[1]
+        data_fim    = f"{ano}-{mes:02d}-{ultimo_dia}T23:59:59"
     
     data_faturamento = data_fim  # ajuste conforme sua lógica
     return data_inicio, data_fim, data_faturamento
@@ -805,6 +813,119 @@ def extratos():
         mes_atual=hoje.month,
         ano_atual=hoje.year
     )
+@app.route('/api/exportar-faturamento-csv')
+def exportar_faturamento_csv():
+    mes = request.args.get('mes', type=int) or date.today().month
+    ano = request.args.get('ano', type=int) or date.today().year
+    
+    try:
+        # Buscar todos os veículos da frota (mesma lógica da rota /api/faturamento-mensal)
+        frota_raw = buscar_supabase("View_Frota_Completa")
+        frota_raw = [v for v in frota_raw if len(str(v.get('prefixo', ''))) == 4]
+        
+        # Criar dicionário de valores por modelo
+        valores_por_modelo = {v["ONIBUS"].strip(): v["valor"] for v in valores_onibus}
+        
+        # Processar veículos e associar valores
+        veiculos_com_custo = []
+        total_veiculos = 0
+        
+        for veiculo in frota_raw:
+            modelo = veiculo.get('modelo', '').strip()
+            prefixo = veiculo.get('prefixo', '')
+            placa = veiculo.get('placa', '')
+            
+            valor_mensal = valores_por_modelo.get(modelo, 0)
+            
+            veiculos_com_custo.append({
+                'prefixo': prefixo,
+                'placa': placa,
+                'modelo': modelo,
+                'valor_mensal': valor_mensal
+            })
+            total_veiculos += valor_mensal
+        
+        # Ordenar por prefixo
+        veiculos_com_custo.sort(key=lambda x: x['prefixo'])
+        
+        # Valor fixo do estoque de peças
+        estoque_pecas = 8000.00
+        
+        # Criar CSV em memória
+        output = StringIO()
+        writer = csv.writer(output, delimiter=';')
+        
+        # Cabeçalho
+        writer.writerow(['FATURAMENTO MENSAL MAAS'])
+        writer.writerow([f'Período: {MESES.get(mes)}/{ano}'])
+        writer.writerow([])
+        
+        # Bloco 1: Custos Fixos por Veículo
+        writer.writerow(['1. CUSTOS FIXOS POR VEÍCULO'])
+        writer.writerow(['Prefixo', 'Placa', 'Modelo', 'Valor Mensal'])
+        
+        for veiculo in veiculos_com_custo:
+            writer.writerow([
+                veiculo['prefixo'],
+                veiculo['placa'],
+                veiculo['modelo'],
+                f"R$ {veiculo['valor_mensal']:.2f}".replace('.', ',')
+            ])
+        
+        writer.writerow(['', '', 'SUBTOTAL VEÍCULOS', f"R$ {total_veiculos:.2f}".replace('.', ',')])
+        writer.writerow([])
+        
+        # Bloco 2: Estoque de Peças
+        writer.writerow(['2. ESTOQUE DE PEÇAS (VALOR FIXO)'])
+        writer.writerow(['Descrição', 'Valor Mensal'])
+        writer.writerow([
+            'Gestão de Estoque de Peças',
+            f"R$ {estoque_pecas:.2f}".replace('.', ',')
+        ])
+        writer.writerow(['SUBTOTAL ESTOQUE', f"R$ {estoque_pecas:.2f}".replace('.', ',')])
+        writer.writerow([])
+        
+        # Total
+        total_geral = total_veiculos + estoque_pecas
+        writer.writerow(['TOTAL GERAL', f"R$ {total_geral:.2f}".replace('.', ',')])
+        
+        # Preparar resposta
+        output.seek(0)
+        
+        return Response(
+            '\ufeff' + output.getvalue(),  # BOM para UTF-8 (abre corretamente no Excel)
+            mimetype='text/csv',
+            headers={
+                'Content-Disposition': f'attachment; filename=faturamento_{mes}_{ano}.csv'
+            }
+        )
+        
+    except Exception as e:
+        import traceback
+        print("ERRO em exportar_faturamento_csv:", traceback.format_exc())
+        return jsonify({'success': False, 'error': str(e)}), 500
+    
+@app.route('/api/diagnostico-os')
+def api_diagnostico_os():
+    ids = request.args.get('ids', '')
+    ids_lista = [i.strip() for i in ids.split(',')]
+    
+    resultado = []
+    for id_os in ids_lista:
+        os_raw = buscar_supabase("Ordens_Servico", f"&numero_sequencial=eq.{id_os}")
+        if os_raw:
+            o = os_raw[0]
+            resultado.append({
+                "numero_sequencial": o.get('numero_sequencial'),
+                "status": o.get('status'),
+                "data_abertura": o.get('data_abertura'),
+                "data_fechamento": o.get('data_fechamento'),
+                "prefixo_veiculo": o.get('prefixo_veiculo'),
+            })
+        else:
+            resultado.append({"numero_sequencial": id_os, "encontrada": False})
+    
+    return jsonify(resultado)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
