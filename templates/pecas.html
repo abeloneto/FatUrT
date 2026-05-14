@@ -122,6 +122,9 @@
         <button class="btn-primary" onclick="carregarFaturamento()">
             <i class="fas fa-sync"></i> Atualizar
         </button>
+        <button class="btn-secondary" onclick="exportarCSV()">
+            <i class="fas fa-file-csv"></i> Exportar CSV
+        </button>
         <button class="btn-secondary" onclick="window.print()">
             <i class="fas fa-file-pdf"></i> Gerar PDF
         </button>
@@ -655,7 +658,13 @@ function gerarSecaoPecas(periodos, total1, total2, total3, totalGeral) {
         </div>
     `;
 }
-
+function exportarCSV() {
+    const mes = document.getElementById('select-mes').value;
+    const ano = document.getElementById('select-ano').value;
+    
+    // Faz o download do CSV
+    window.location.href = `/api/exportar-faturamento-csv?mes=${mes}&ano=${ano}`;
+}
 document.addEventListener('DOMContentLoaded', carregarFaturamento);
 </script>
 {% endblock %}
