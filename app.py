@@ -172,6 +172,12 @@ resumo_composição = [
     }
 ]
 
+def prefixo_valido(prefixo, mes, ano):
+    """Retorna True se o prefixo deve ser incluído no período informado."""
+    tamanho = len(str(prefixo))
+    if ano > 2026 or (ano == 2026 and mes >= 5):
+        return tamanho in (4,5)  # aceita ambos a partir de maio/2025
+    return tamanho == 4  # só 4 dígitos antes de maio/2025
 
 
 def buscar_supabase(tabela, filtros=""):
@@ -197,7 +203,7 @@ def obter_dados(mes, ano, periodo='1', apenas_com_insumos=True, excluir_danos_se
         f"&status=eq.FECHADA&data_fechamento=gte.{data_inicio}&data_fechamento=lte.{data_fim}"
                                 )
     if ordens_raw:
-        ordens_raw = [o for o in ordens_raw if len(str(o.get('prefixo_veiculo', ''))) == 4]
+        ordens_raw = [o for o in ordens_raw if prefixo_valido(o.get('prefixo_veiculo', ''), mes, ano)]
 
     if excluir_danos_severos:
         ordens_raw = [o for o in ordens_raw if not o.get('is_dano_severo', False)]
@@ -499,26 +505,6 @@ def api_relatorio():
         'data_geracao': datetime.now().strftime("%d/%m/%Y %H:%M")
     })
 
-def calcular_periodo_pecas(periodo, mes, ano):
-
-    if periodo == '1':
-        data_inicio = f"{ano}-{mes:02d}-01"
-        data_fim    = f"{ano}-{mes:02d}-10"
-    elif periodo == '2':
-        data_inicio = f"{ano}-{mes:02d}-11"
-        data_fim    = f"{ano}-{mes:02d}-20"
-    elif periodo == '3':
-        data_inicio = f"{ano}-{mes:02d}-21"
-        data_fim    = f"{ano}-{mes:02d}-{calendar.monthrange(ano, mes)[1]}"
-    
-    # ✅ Adicione esse bloco:
-    elif periodo == '4':
-        data_inicio = f"{ano}-{mes:02d}-01"
-        data_fim    = f"{ano}-{mes:02d}-{calendar.monthrange(ano, mes)[1]}"
-    
-    data_faturamento = data_fim  # ajuste conforme sua lógica
-    return data_inicio, data_fim, data_faturamento
-
 @app.route('/api/extratos')
 def api_extratos():
     mes = request.args.get('mes', type=int) or date.today().month
@@ -566,7 +552,7 @@ def api_faturamento_mensal():
     # Buscar todos os veículos da frota
     frota_raw = buscar_supabase("View_Frota_Completa")
 
-    frota_raw = [v for v in frota_raw if len(str(v.get('prefixo', ''))) == 4]
+    frota_raw = [v for v in frota_raw if prefixo_valido(v.get('prefixo', ''), mes, ano)]
     
     # Criar dicionário da frota para uso posterior (linha 663)
     frota_dict = {v.get('prefixo'): {'placa': v.get('placa'), 'modelo': v.get('modelo')} 
@@ -620,7 +606,7 @@ def api_faturamento_mensal():
         "Ordens_Servico",
         f"&status=eq.FECHADA&is_dano_severo=eq.true&data_fechamento=gte.{primeiro_dia}&data_fechamento=lte.{ultimo_dia}"
     )
-    os_danos_severos = [os for os in os_danos_severos if len(str(os.get('prefixo_veiculo', ''))) == 4]
+    os_danos_severos = [os for os in os_danos_severos if prefixo_valido(os.get('prefixo_veiculo', ''), mes, ano)]
 
     print(f"🔥 Danos severos encontrados: {len(os_danos_severos)}")
 
@@ -708,7 +694,7 @@ def api_pecas():
         f"&status=eq.FECHADA&data_fechamento=gte.{data_inicio}&data_fechamento=lte.{data_fim}"
     )
     
-    ordens_raw = [o for o in ordens_raw if len(str(o.get('prefixo_veiculo', ''))) == 4]
+    ordens_raw = [o for o in ordens_raw if prefixo_valido(o.get('prefixo_veiculo', ''), mes, ano)]
 
     print(f"DEBUG - Período: {data_inicio} a {data_fim}")
     print(f"DEBUG - Total de OS encontradas: {len(ordens_raw)}")
@@ -735,7 +721,7 @@ def api_pecas():
     # Buscar dados da frota para pegar placa e modelo
     frota_raw = buscar_supabase("View_Frota_Completa")
 
-    frota_raw = [v for v in frota_raw if len(str(v.get('prefixo', ''))) == 4]
+    frota_raw = [v for v in frota_raw if prefixo_valido(v.get('prefixo', ''), mes, ano)]
 
     frota_dict = {v.get('prefixo'): {'placa': v.get('placa'), 'modelo': v.get('modelo')} 
                 for v in frota_raw}
@@ -821,7 +807,7 @@ def exportar_faturamento_csv():
     try:
         # Buscar todos os veículos da frota (mesma lógica da rota /api/faturamento-mensal)
         frota_raw = buscar_supabase("View_Frota_Completa")
-        frota_raw = [v for v in frota_raw if len(str(v.get('prefixo', ''))) == 4]
+        frota_raw = [v for v in frota_raw if prefixo_valido(v.get('prefixo', ''), mes, ano)]
         
         # Criar dicionário de valores por modelo
         valores_por_modelo = {v["ONIBUS"].strip(): v["valor"] for v in valores_onibus}
