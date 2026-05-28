@@ -355,6 +355,7 @@
                                 placa: os.placa,
                                 tarefas: os.tarefas,
                                 defeito_relatado: os.defeito_relatado,
+                                servico_realizado: os.servico_realizado,
                                 is_dano_severo: os.is_dano_severo,
                                 prefixo: prefixo,
                                 modelo: modelo,
@@ -418,6 +419,7 @@
                                 <td style="text-align:center;">${osData.km_atual || '-'}</td>
                                 <td><span class="badge-tipo ${badgeClass}">${badgeLabel}</span></td>
                                 <td style="text-align:center;">${osData.defeito_relatado || '-'}</td>
+                                <td style="text-align:center;">${osData.servico_realizado || '-'}</td>
                                 <td style="max-width:320px; font-size:11px;">Mão de obra + ${ins.descricao || '-'}</td>
                                 <td style="text-align:center; font-weight:600;">${ins.quantidade || 0}</td>
                             </tr>`;
@@ -432,6 +434,7 @@
                             <td style="text-align:center;">${osData.km_atual || '-'}</td>
                             <td><span class="badge-tipo ${badgeClass}">${badgeLabel}</span></td>
                             <td style="text-align:center;">${osData.defeito_relatado || '-'}</td>
+                            <td style="text-align:center;">${osData.servico_realizado || '-'}</td>
                             <td style="color:#000; font-style:italic;">Mão de obra</td>
                             <td style="text-align:center;">-</td>
                         </tr>`;
@@ -455,6 +458,7 @@
                                 <th style="text-align:center">Hodômetro</th>
                                 <th>Tipo de Serviço</th>
                                 <th>Defeito Relatado</th>
+                                <th>Serviço Realizado</th>
                                 <th>Serviço / Peça</th>
                                 <th style="text-align:center">Qtde</th>
                             </tr>

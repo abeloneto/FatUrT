@@ -249,6 +249,11 @@
             .top-header, .control-bar, .btn-group, .nav-abas { display: none !important; }
 
             body { background: white; padding: 0; margin: 0; }
+            
+            table { border-collapse: collapse !important; }
+            table tr { page-break-inside: avoid !important; }
+
+            @page { size: landscape; margin: 1cm; }
 
             .table-wrapper {
                 border: none !important;
@@ -288,7 +293,7 @@
                 border: none !important;
                 padding: 8px 10px !important;
                 color: #000 !important;
-                font-size: 11px !important;
+                font-size: 8pt !important;
             }
 
             table tbody td:last-child,
