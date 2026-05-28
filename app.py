@@ -310,6 +310,7 @@ def obter_dados(mes, ano, periodo='1', apenas_com_insumos=True, excluir_danos_se
             "tarefas": ", ".join(tarefas) if tarefas else '-',
             "descricao": " | ".join(descricoes) if descricoes else os.get('defeito_relatado', '-'),
             "defeito_relatado": os.get('defeito_relatado', '-'),
+            "servico_realizado": os.get('servico_realizado', '-'),
             "is_dano_severo": os.get('is_dano_severo', False),
             "insumos": insumos,
             "valor_total": valor_total,
@@ -356,6 +357,13 @@ def api_relatorio_csv():
     ano = request.args.get('ano', type=int) or date.today().year
     periodo = request.args.get('periodo', '4')  # ✅ Alterado para '4' (mês completo)
 
+    periodos = {
+    '1': '01a10',
+    '2': '11a20',
+    '3': '21ao_ultimo',
+    '4': 'mes_completo'
+    }
+
     # ✅ BUSCAR TODAS AS OS (sem filtro de apenas_com_insumos)
     dados = obter_dados(mes, ano, periodo, apenas_com_insumos=False, excluir_danos_severos=False)
 
@@ -365,7 +373,7 @@ def api_relatorio_csv():
     # Cabeçalho
     writer.writerow(['Nº OS', 'Nota Fiscal', 'Abertura', 'Fechamento', 'Prefixo', 'Placa',
                      'Modelo', 'Família', 'Hodômetro', 'Tipo de Serviço', 'Descrição Serviço',
-                     'Defeito Relatado', 'Dano Severo', 'Item/Peça',
+                     'Defeito Relatado','Serviço Realizado', 'Dano Severo', 'Item/Peça',
                      'Quantidade', 'Valor Unitário (R$)', 'Valor Total (R$)'])
 
     # ✅ Buscar TODOS os encaminhamentos (com e sem insumos)
@@ -421,6 +429,7 @@ def api_relatorio_csv():
                     os['tarefas'],
                     os['descricao'],
                     os['defeito_relatado'],
+                    os['servico_realizado'],
                     'Sim' if os['is_dano_severo'] else 'Não',
                     enc['descricao'],  # Item/Peça
                     str(enc['quantidade']).replace('.', ','),
@@ -442,6 +451,7 @@ def api_relatorio_csv():
                 os['tarefas'],
                 os['descricao'],
                 os['defeito_relatado'],
+                os['servico_realizado'],
                 'Sim' if os['is_dano_severo'] else 'Não',
                 'Mão de obra',  # ✅ Item/Peça
                 '-',  # Quantidade
@@ -449,7 +459,8 @@ def api_relatorio_csv():
                 '-'   # ✅ Valor Total vazio para OS sem peças
             ])
 
-    nome_arquivo = f"extrato_manutencao_{MESES.get(mes,'').lower()}_{ano}.csv"
+    nome_periodo = periodos.get(periodo, periodo)
+    nome_arquivo = f"extrato_manutencao_{MESES.get(mes,'').lower()}_{ano}_{nome_periodo}.csv"
 
     return Response(
         '\ufeff' + output.getvalue(),
@@ -891,27 +902,6 @@ def exportar_faturamento_csv():
         print("ERRO em exportar_faturamento_csv:", traceback.format_exc())
         return jsonify({'success': False, 'error': str(e)}), 500
     
-@app.route('/api/diagnostico-os')
-def api_diagnostico_os():
-    ids = request.args.get('ids', '')
-    ids_lista = [i.strip() for i in ids.split(',')]
-    
-    resultado = []
-    for id_os in ids_lista:
-        os_raw = buscar_supabase("Ordens_Servico", f"&numero_sequencial=eq.{id_os}")
-        if os_raw:
-            o = os_raw[0]
-            resultado.append({
-                "numero_sequencial": o.get('numero_sequencial'),
-                "status": o.get('status'),
-                "data_abertura": o.get('data_abertura'),
-                "data_fechamento": o.get('data_fechamento'),
-                "prefixo_veiculo": o.get('prefixo_veiculo'),
-            })
-        else:
-            resultado.append({"numero_sequencial": id_os, "encontrada": False})
-    
-    return jsonify(resultado)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
