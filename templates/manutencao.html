@@ -44,7 +44,7 @@
         <button class="btn-secondary" onclick="exportarCSV()">
     <i class="fas fa-file-csv"></i> Exportar CSV
 </button>
-<button class="btn-secondary" onclick="window.print()">
+<button class="btn-secondary" onclick="exportarPDF()">
     <i class="fas fa-file-pdf"></i> Gerar PDF
 </button>
     </div>
@@ -273,6 +273,14 @@
 
 {% block scripts %}
 <script>
+
+    function exportarPDF() {
+    const mes = document.getElementById('select-mes').value;
+    const ano = document.getElementById('select-ano').value;
+    const periodo = document.getElementById('select-periodo').value;
+    window.location.href = `/api/relatorio/pdf?mes=${mes}&ano=${ano}&periodo=${periodo}`;
+}
+
     function exportarCSV() {
         const mes = document.getElementById('select-mes').value;
         const ano = document.getElementById('select-ano').value;
