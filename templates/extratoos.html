@@ -35,7 +35,7 @@
         <button class="btn-secondary" onclick="exportarCSV()">
     <i class="fas fa-file-csv"></i> Exportar CSV
 </button>
-<button class="btn-secondary" onclick="window.print()">
+<button class="btn-secondary" onclick="exportarPDF()">
     <i class="fas fa-file-pdf"></i> Gerar PDF
 </button>
     </div>
@@ -259,6 +259,12 @@
 
 {% block scripts %}
 <script>
+    function exportarPDF() {
+        const mes = document.getElementById('select-mes').value;
+        const ano = document.getElementById('select-ano').value;
+        window.location.href = `/api/extratos/pdf-zip?mes=${mes}&ano=${ano}`;
+}
+
     function exportarCSV() {
         const mes = document.getElementById('select-mes').value;
         const ano = document.getElementById('select-ano').value;
