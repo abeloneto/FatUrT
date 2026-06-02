@@ -907,6 +907,203 @@ def exportar_faturamento_csv():
         print("ERRO em exportar_faturamento_csv:", traceback.format_exc())
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/extratos/pdf-zip')
+def api_extratos_pdf_zip():
+    mes = request.args.get('mes', type=int) or date.today().month
+    ano = request.args.get('ano', type=int) or date.today().year
+
+    # Todas as OS, sem nenhum filtro
+    dados  = obter_dados(mes, ano, periodo='4', apenas_com_insumos=False, excluir_danos_severos=False)
+    ordens = dados['ordens']
+
+    if not ordens:
+        return Response("Nenhuma OS encontrada.", mimetype='text/plain'), 404
+
+    # ── Constantes ────────────────────────────────────────────────────────
+    PAGESIZE   = landscape(A4)
+    PAGE_W     = PAGESIZE[0]
+    PAGE_H     = PAGESIZE[1]
+    MARGEM_LAT = 1.5 * cm
+    MARGEM_TOP = 3.6 * cm
+    MARGEM_BOT = 1.2 * cm
+
+    PRETO      = colors.black
+    CINZA_BG   = colors.HexColor('#f2f2f2')
+    CINZA_LINHA= colors.HexColor('#cccccc')
+
+    s_small     = ParagraphStyle('small2', fontName='Helvetica',      fontSize=7, leading=9)
+    s_bold      = ParagraphStyle('bold2',  fontName='Helvetica-Bold', fontSize=7, leading=9)
+    s_meta      = ParagraphStyle('meta2',  fontName='Helvetica',      fontSize=8, leading=11)
+    s_meta_bold = ParagraphStyle('metab2', fontName='Helvetica-Bold', fontSize=9, leading=12)
+
+    def fmt_iso(d):
+        try:
+            p = d[:10].split('-')
+            return f"{p[2]}/{p[1]}/{p[0]}"
+        except:
+            return d
+
+    periodo_str  = f"{fmt_iso(dados['periodo']['inicio'])} a {fmt_iso(dados['periodo']['fim'])}"
+    data_geracao = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    contrato_str = dados.get('contrato', '001/2025')
+
+    # ── Cabeçalho fixo (igual ao extrato, sem logos) ──────────────────────
+    def cabecalho_pagina(canvas_obj, doc_obj):
+        canvas_obj.saveState()
+        x0 = MARGEM_LAT
+        x1 = PAGE_W - MARGEM_LAT
+
+        y = PAGE_H - 1.0 * cm
+        canvas_obj.setFont('Helvetica-Bold', 9)
+        canvas_obj.drawString(x0, y, "MAAS SERVICOS")
+        canvas_obj.setFont('Helvetica', 8)
+        canvas_obj.drawRightString(x1, y, data_geracao)
+
+        y -= 0.55 * cm
+        canvas_obj.setFont('Helvetica', 8)
+        canvas_obj.drawString(x0, y, f"Período de Busca: {periodo_str}")
+        canvas_obj.setFont('Helvetica-Bold', 8)
+        canvas_obj.drawRightString(x1, y, "Extrato de Manutenção")
+
+        y -= 0.35 * cm
+        canvas_obj.setLineWidth(0.6)
+        canvas_obj.line(x0, y, x1, y)
+
+        y -= 0.45 * cm
+        canvas_obj.setFont('Helvetica-Bold', 8)
+        canvas_obj.drawString(x0, y,
+            f"Contrato: {contrato_str} – Consórcio do Sistema Metropolitano – BRT")
+
+        y -= 0.35 * cm
+        canvas_obj.setLineWidth(0.6)
+        canvas_obj.line(x0, y, x1, y)
+
+        canvas_obj.restoreState()
+
+    # ── Colunas (sem valores financeiros, com Nº OS e Hodômetro) ──────────
+    # Início | Final | Nº OS | Hodômetro | Tipo Serviço | Defeito | Serviço Realizado | Serviço/Peça | Qtde
+    col_w = [2.5*cm, 2.5*cm, 1.8*cm, 2.2*cm, 2.4*cm, 4.8*cm, 4.8*cm, 4.5*cm, 1.2*cm]
+
+    cab_tabela = [
+        Paragraph('<b>Início</b>',            s_bold),
+        Paragraph('<b>Final</b>',             s_bold),
+        Paragraph('<b>Nº OS</b>',             s_bold),
+        Paragraph('<b>Hodômetro</b>',         s_bold),
+        Paragraph('<b>Tipo de Serviço</b>',   s_bold),
+        Paragraph('<b>Defeito Relatado</b>',  s_bold),
+        Paragraph('<b>Serviço Realizado</b>', s_bold),
+        Paragraph('<b>Serviço/Peça</b>',      s_bold),
+        Paragraph('<b>Qtde</b>',              s_bold),
+    ]
+
+    # ── Gera um PDF por OS e empacota no ZIP ──────────────────────────────
+    zip_buffer = io.BytesIO()
+
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for os in ordens:
+            pdf_buffer = io.BytesIO()
+
+            doc = BaseDocTemplate(
+                pdf_buffer, pagesize=PAGESIZE,
+                rightMargin=MARGEM_LAT, leftMargin=MARGEM_LAT,
+                topMargin=MARGEM_TOP,   bottomMargin=MARGEM_BOT,
+            )
+            frame = Frame(
+                MARGEM_LAT, MARGEM_BOT,
+                PAGE_W - 2 * MARGEM_LAT,
+                PAGE_H - MARGEM_TOP - MARGEM_BOT,
+                id='normal',
+                leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0
+            )
+            doc.addPageTemplates([
+                PageTemplate(id='comCabecalho', frames=frame, onPage=cabecalho_pagina)
+            ])
+
+            numero_os   = os.get('numero_os',        '-')
+            inicio      = os.get('data_abertura',    '-')
+            fim         = os.get('data_fechamento',  '-')
+            hodometro   = str(os.get('km_atual',     '-'))
+            tipo        = os.get('tarefas',          '-')
+            defeito     = os.get('defeito_relatado',  '-') or '-'
+            servico_rea = os.get('servico_realizado', '-') or '-'
+            insumos     = os.get('insumos', [])
+
+            story = []
+            story.append(Paragraph(
+                f"OS: {numero_os} | Modelo: {os.get('modelo', '-')}",
+                s_meta_bold
+            ))
+            story.append(Spacer(1, 0.15*cm))
+            story.append(Paragraph(
+                f"<b>Prefixo:</b> {os.get('prefixo','-')}  "
+                f"<b>Placa:</b> {os.get('placa','-')}  "
+                f"<b>Hodômetro:</b> {hodometro}",
+                s_meta
+            ))
+            story.append(Spacer(1, 0.25*cm))
+
+            linhas = [cab_tabela]
+
+            if insumos:
+                for i_idx, ins in enumerate(insumos):
+                    primeiro = i_idx == 0
+                    qtd = ins.get('quantidade', 0) or 0
+                    linhas.append([
+                        Paragraph(inicio      if primeiro else '', s_small),
+                        Paragraph(fim         if primeiro else '', s_small),
+                        Paragraph(numero_os   if primeiro else '', s_small),
+                        Paragraph(hodometro   if primeiro else '', s_small),
+                        Paragraph(tipo        if primeiro else '', s_small),
+                        Paragraph(defeito     if primeiro else '', s_small),
+                        Paragraph(servico_rea if primeiro else '', s_small),
+                        Paragraph(ins.get('descricao', '-'), s_small),
+                        Paragraph(str(int(qtd)) if qtd == int(qtd) else str(qtd), s_small),
+                    ])
+            else:
+                linhas.append([
+                    Paragraph(inicio,        s_small),
+                    Paragraph(fim,           s_small),
+                    Paragraph(numero_os,     s_small),
+                    Paragraph(hodometro,     s_small),
+                    Paragraph(tipo,          s_small),
+                    Paragraph(defeito,       s_small),
+                    Paragraph(servico_rea,   s_small),
+                    Paragraph('Mão de obra', s_small),
+                    Paragraph('-',           s_small),
+                ])
+
+            tabela = Table(linhas, colWidths=col_w, repeatRows=1)
+            tabela.setStyle(TableStyle([
+                ('BACKGROUND',    (0, 0), (-1, 0), CINZA_BG),
+                ('LINEABOVE',     (0, 0), (-1,  0), 0.8, PRETO),
+                ('LINEBELOW',     (0, 0), (-1,  0), 0.5, CINZA_LINHA),
+                ('LINEBELOW',     (0, 1), (-1, -1), 0.3, CINZA_LINHA),
+                ('VALIGN',        (0, 0), (-1, -1), 'TOP'),
+                ('ALIGN',         (8, 0), (8, -1),  'RIGHT'),
+                ('TOPPADDING',    (0, 0), (-1, -1), 3),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+                ('LEFTPADDING',   (0, 0), (-1, -1), 4),
+                ('RIGHTPADDING',  (0, 0), (-1, -1), 4),
+            ]))
+
+            story.append(tabela)
+            doc.build(story)
+            pdf_buffer.seek(0)
+
+            nome_pdf = f"OS_{numero_os}_{os.get('prefixo', 'SEM_PREFIXO')}.pdf"
+            zf.writestr(nome_pdf, pdf_buffer.getvalue())
+
+    zip_buffer.seek(0)
+    nome_mes = MESES.get(mes, '').lower()
+    nome_zip = f"extrato_completo_{nome_mes}_{ano}.zip"
+
+    return Response(
+        zip_buffer.getvalue(),
+        mimetype='application/zip',
+        headers={'Content-Disposition': f'attachment; filename="{nome_zip}"'}
+    )
+
+
 @app.route('/api/relatorio/pdf')
 def api_relatorio_pdf():
     mes     = request.args.get('mes',     type=int) or date.today().month
