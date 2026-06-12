@@ -113,7 +113,38 @@
         page-break-after: avoid;
         break-after: avoid;
     }
+    .print-header {
+        display: block !important;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        margin-bottom: 16px;
+        background: #fff;
+    }
+    .print-header-periodo {
+        font-size: 11px;
+        color: #000;
+        border-bottom: 1.5px solid #000;
+        padding-bottom: 6px;
+        margin-bottom: 8px;
+    }
+    .print-contrato {
+        font-size: 11px;
+        font-weight: 700;
+        color: #000;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 4px;
+        margin-bottom: 8px;
+    }
+
+    /* Empurra o conteúdo para não ficar escondido atrás do cabeçalho fixo */
+    .section {
+        padding-top: 70px;
+    }
+    
 }
+.print-header { display: none; }
 </style>
 
 <div class="control-bar">
@@ -308,27 +339,12 @@ function renderizarFaturamento(data, pecasPeriodos) {
     const totalGeral = totalVeiculos + data.estoque_pecas ;
 
     const cabecalhoTotal = `
-        <div class="print-only" style="margin-bottom: 30px; padding: 25px; 
-                    border-radius: 12px; color: white;">
-            <div style="display: flex; align-items: center; gap: 20px;">
-                <div style="flex: 1;">
-                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px; 
-                                text-transform: uppercase; letter-spacing: 1px;">
-                        📊 Faturamento Total - ${data.nome_mes}/${data.ano}
-                    </div>
-                    <div style="font-size: 32px; font-weight: 800; line-height: 1;">
-                        R$ ${formatarMoeda(totalGeral)}
-                    </div>
-                    <div style="font-size: 13px; opacity: 0.85; margin-top: 10px;">
-                        <i class="fas fa-info-circle"></i> 
-                        Valor total do faturamento mensal (custos fixos + estoque)
-                    </div>
-                </div>
-                <div style="text-align: right; font-size: 14px; opacity: 0.9;">
-                    <div style="margin-bottom: 5px;">📅 ${data.contrato}</div>
-                    <div>🕐 ${data.data_geracao}</div>
-                </div>
+        <div class="print-header">
+            <div class="print-header-periodo">
+                <strong>Período: ${data.nome_mes}/${data.ano}</strong>
+                <span style="float:right; font-weight:700;">Faturamento Mensal</span>
             </div>
+            <div class="print-contrato">Contrato: ${data.contrato} – Consórcio do Sistema Metropolitano – BRT</div>
         </div>
     `;
 
