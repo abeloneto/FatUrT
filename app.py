@@ -298,7 +298,7 @@ def obter_dados(mes, ano, periodo='1', apenas_com_insumos=True, excluir_danos_se
             if e.get('insumo_descricao'):
                 insumos.append({
                     "descricao": e['insumo_descricao'],
-                    "quantidade": int(e.get('insumo_quantidade') or 0),
+                    "quantidade": float(e.get('insumo_quantidade') or 0),
                     "valor_total": float(e.get('insumo_valor_total') or 0)
                 })
                 valor_total += float(e.get('insumo_valor_total') or 0)
