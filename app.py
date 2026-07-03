@@ -300,7 +300,7 @@ def obter_dados(mes, ano, periodo='1', apenas_com_insumos=True, excluir_danos_se
                     "descricao": e['insumo_descricao'],
                     "quantidade": float(e.get('insumo_quantidade') or 0),
                     "valor_total": float(e.get('insumo_valor_total') or 0)
-                })
+                })  
                 valor_total += float(e.get('insumo_valor_total') or 0)
 
         ordens.append({
@@ -1090,7 +1090,11 @@ def api_extratos_pdf_zip():
             doc.build(story)
             pdf_buffer.seek(0)
 
-            nome_pdf = f"OS_{numero_os}_{os.get('prefixo', 'SEM_PREFIXO')}.pdf"
+            # Separa em subpastas conforme a OS tenha pecas ou seja so mao de obra
+            tem_pecas = len(os.get('insumos', [])) > 0
+            subpasta = 'Com Pecas' if tem_pecas else 'Mao de Obra'
+            print(f">>> GERANDO NO ZIP: {subpasta}/OS_{numero_os}")
+            nome_pdf = f"{subpasta}/OS_{numero_os}_{os.get('prefixo', 'SEM_PREFIXO')}.pdf"
             zf.writestr(nome_pdf, pdf_buffer.getvalue())
 
     zip_buffer.seek(0)
