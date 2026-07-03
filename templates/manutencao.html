@@ -407,7 +407,8 @@
                             if (os.is_dano_severo) badgeClass = 'badge-dano';
 
                             const badgeLabel = os.is_dano_severo ? 'Dano Severo' : (os.tarefas || '-');
-                            const notasFiscais = (os.notas_fiscais && os.notas_fiscais !== '-') ? os.notas_fiscais : null;                         
+                            const notasFiscais = (os.notas_fiscais && os.notas_fiscais !== '-') ? os.notas_fiscais : null;
+                            const notasCompra = (os.notas_compra && os.notas_compra !== '-') ? os.notas_compra : null;
                 
 
                             // linha expandível de insumos
@@ -423,7 +424,7 @@
                                     insumoLinhas += `
                                     <tr>
                                         <td>${ins.descricao || '-'}</td>
-                                        <td style="text-align:center">${ins.quantidade || 0}</td>
+                                        <td style="text-align:center">${parseFloat(ins.quantidade || 0).toFixed(2)}</td>
                                         <td style="text-align:right">${vlrUnit}</td>
                                         <td style="text-align:right">R$ ${formatarMoeda(ins.valor_total || 0)}</td>
                                     </tr>`;
@@ -469,6 +470,11 @@
                                         ? `<span class="notas-fiscais-badge"> ${notasFiscais}</span>`
                                         : '<span style="color: #dc3545; font-weight: bold;">⚠ Pendente</span>';
 
+                                    const notasCompraPeca = (ins.numero_nf_compra && ins.numero_nf_compra !== '-') ? ins.numero_nf_compra : null;
+                                    const notasCompraHtml = notasCompraPeca
+                                        ? `<span class="notas-fiscais-badge"> ${notasCompraPeca}</span>`
+                                        : '<span style="color:#999;">-</span>';
+
                                     
                                     linhasOS += `
                                     <tr class="os-row" onclick="toggleInsumos('${insId}')" id="${rowId}">
@@ -476,17 +482,18 @@
                                         <td>${os.data_fechamento || '-'}</td>
                                         <td style="text-align:center; font-weight:600;">${os.numero_os}</td>
                                         <td style="text-align:center; font-weight:600;">${notasHtml}</td>
+                                        <td style="text-align:center; font-weight:600;">${notasCompraHtml}</td>
                                         <td><span class="badge-tipo ${badgeClass}">${badgeLabel}</span></td>
                                         <td class="cell-texto-os" style="max-width:320px; text-align:center; font-size:10px;">${os.defeito_relatado}</td>
                                         <td class="cell-texto-os" style="max-width:320px; text-align:center; font-size:10px;">${os.servico_realizado || '-'}</td>
                                         <td class="cell-texto-os" style="max-width:320px; font-size:10px; color:#333;">${ins.descricao || '-'}</td>
-                                        <td style="text-align:center; font-weight:600;">${ins.quantidade || 0}</td>
+                                        <td style="text-align:center; font-weight:600;">${parseFloat(ins.quantidade || 0).toFixed(2)}</td>
                                         <td style="text-align:right;">${valorUnitario}</td>
                                         <td style="text-align:right; font-weight:600;">${ins.valor_total > 0 ? 'R$ ' + formatarMoeda(ins.valor_total) : '-'}</td>
                                     </tr>
                                     ${insumoTabela ? `
                                     <tr id="${insId}" class="insumos-tr" style="display:none;">
-                                        <td colspan="8" style="padding:0 12px 12px 12px;">
+                                        <td colspan="9" style="padding:0 12px 12px 12px;">
                                             ${insumoTabela}
                                         </td>
                                     </tr>` : ''}`;
@@ -513,7 +520,8 @@
                                             <th>Início</th>
                                             <th>Final</th>
                                             <th style="text-align:center">Nº OS</th>
-                                            <th style="text-align:center">Nº NF</th>
+                                            <th style="text-align:center">NF Venda</th>
+                                            <th style="text-align:center">NF Compra</th>
                                             <th>Tipo de Serviço</th>
                                             <th>Defeito Relatado</th>
                                             <th>Serviço Realizado</th>
@@ -572,7 +580,7 @@
                     <table>
                         <tfoot>
                             <tr class="total-contrato-row" style="background:#3fb271; color:#fff; font-weight:700; font-size:13px;">
-                                <td colspan="10" style="padding:10px 16px;">Total Geral</td>
+                                <td colspan="11" style="padding:10px 16px;">Total Geral</td>
                                 <td style="text-align:right; padding:10px 16px;">R$ ${formatarMoeda(totalGeralContrato)}</td>
                             </tr>
                         </tfoot>

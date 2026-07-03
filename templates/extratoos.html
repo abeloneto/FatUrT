@@ -36,7 +36,7 @@
     <i class="fas fa-file-csv"></i> Exportar CSV
 </button>
 <button class="btn-secondary" onclick="exportarPDF()">
-    <i class="fas fa-file-pdf"></i> Gerar PDF
+    <i class="fas fa-file-pdf"></i> Gerar PDF neuvis
 </button>
     </div>
 </div>
@@ -260,9 +260,9 @@
 {% block scripts %}
 <script>
     function exportarPDF() {
-        const mes = document.getElementById('select-mes').value;
-        const ano = document.getElementById('select-ano').value;
-        window.location.href = `/api/extratos/pdf-zip?mes=${mes}&ano=${ano}`;
+    const mes = document.getElementById('select-mes').value;
+    const ano = document.getElementById('select-ano').value;
+    window.location.href = `/api/extratos/pdf-zip?mes=${mes}&ano=${ano}`;
 }
 
     function exportarCSV() {
@@ -422,6 +422,8 @@
                                 <td>${osData.data_abertura || '-'}</td>
                                 <td>${osData.data_fechamento || '-'}</td>
                                 <td style="text-align:center; font-weight:600;">${osData.numero_os || '-'}</td>
+                                <td style="text-align:center;">${(osData.notas_fiscais && osData.notas_fiscais !== '-') ? osData.notas_fiscais : '-'}</td>
+                                <td style="text-align:center;">${(ins.numero_nf_compra && ins.numero_nf_compra !== '-') ? ins.numero_nf_compra : '-'}</td>
                                 <td style="text-align:center;">${osData.km_atual || '-'}</td>
                                 <td><span class="badge-tipo ${badgeClass}">${badgeLabel}</span></td>
                                 <td style="text-align:center;">${osData.defeito_relatado || '-'}</td>
@@ -437,6 +439,8 @@
                             <td>${osData.data_abertura || '-'}</td>
                             <td>${osData.data_fechamento || '-'}</td>
                             <td style="text-align:center; font-weight:600;">${osData.numero_os || '-'}</td>
+                            <td style="text-align:center;">${(osData.notas_fiscais && osData.notas_fiscais !== '-') ? osData.notas_fiscais : '-'}</td>
+                            <td style="text-align:center;">-</td>
                             <td style="text-align:center;">${osData.km_atual || '-'}</td>
                             <td><span class="badge-tipo ${badgeClass}">${badgeLabel}</span></td>
                             <td style="text-align:center;">${osData.defeito_relatado || '-'}</td>
@@ -461,6 +465,8 @@
                                 <th>Início</th>
                                 <th>Final</th>
                                 <th style="text-align:center">Nº OS</th>
+                                <th style="text-align:center">NF Venda</th>
+                                <th style="text-align:center">NF Compra</th>
                                 <th style="text-align:center">Hodômetro</th>
                                 <th>Tipo de Serviço</th>
                                 <th>Defeito Relatado</th>

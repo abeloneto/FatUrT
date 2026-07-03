@@ -486,7 +486,7 @@ function renderizarFaturamento(data, pecasPeriodos) {
     if (danos.length === 0) {
         linhasDanos = `
             <tr>
-                <td colspan="5" style="text-align:center; color:#999; padding:20px;">
+                <td colspan="7" style="text-align:center; color:#999; padding:20px;">
                     <i class="fas fa-check-circle" style="font-size:32px; margin-bottom:8px; display:block; color:#28a745;"></i>
                     Nenhum dano severo registrado neste período
                 </td>
@@ -498,6 +498,8 @@ function renderizarFaturamento(data, pecasPeriodos) {
                 <tr>
                     <td>${dano.prefixo}</td>
                     <td style="text-align:center;">${dano.numero_os}</td>
+                    <td style="text-align:center; font-size:11px;">${(dano.numero_nf && dano.numero_nf !== '-') ? dano.numero_nf : '-'}</td>
+                    <td style="text-align:center; font-size:11px;">${(dano.numero_nf_compra && dano.numero_nf_compra !== '-') ? dano.numero_nf_compra : '-'}</td>
                     <td>${dano.modelo}</td>
                     <td style="font-size:11px;">${dano.defeito_relatado}</td>
                     <td style="text-align:right; font-weight:600;">R$ ${formatarMoeda(dano.valor)}</td>
@@ -531,6 +533,8 @@ function renderizarFaturamento(data, pecasPeriodos) {
                         <tr>
                             <th>Prefixo</th>
                             <th style="text-align:center;">Nº OS</th>
+                            <th style="text-align:center;">NF Venda</th>
+                            <th style="text-align:center;">NF Compra</th>
                             <th>Modelo</th>
                             <th>Defeito Relatado</th>
                             <th style="text-align:right;">Valor</th>
@@ -539,7 +543,7 @@ function renderizarFaturamento(data, pecasPeriodos) {
                     <tbody>${linhasDanos}</tbody>
                     <tfoot>
                         <tr style="background:#${danos.length > 0 ? 'dc3545' : '6c757d'}; color:#fff; font-weight:700;">
-                            <td colspan="4" style="padding:10px 12px;">SUBTOTAL DANOS SEVEROS</td>
+                            <td colspan="6" style="padding:10px 12px;">SUBTOTAL DANOS SEVEROS</td>
                             <td style="text-align:right; padding:10px 12px;">R$ ${formatarMoeda(total)}</td>
                         </tr>
                     </tfoot>
@@ -600,7 +604,7 @@ function gerarSecaoPecas(periodos, total1, total2, total3, totalGeral) {
         
         linhasPeriodos += `
             <tr style="background:#f8f9fa;">
-                <td colspan="3" style="padding:12px; font-weight:600; font-size:12px; color:#495057;">
+                <td colspan="5" style="padding:12px; font-weight:600; font-size:12px; color:#495057;">
                     <i class="fas fa-calendar-day"></i> Período ${idx + 1}: ${nomePeriodos[idx]}
                 </td>
             </tr>
@@ -611,6 +615,8 @@ function gerarSecaoPecas(periodos, total1, total2, total3, totalGeral) {
             periodo.prefixos.forEach(prefixo => {
                 const osUnicas = [...new Set(prefixo.itens.map(i => i.numero_os))].join(', ');
                 const totalInsumos = prefixo.itens.reduce((acc, item) => acc + (item.quantidade || 0), 0);
+                const nfVenda = [...new Set(prefixo.itens.map(i => i.numero_nf).filter(n => n && n !== '-').flatMap(n => n.split(',').map(x => x.trim())))].join(', ') || '-';
+                const nfCompra = [...new Set(prefixo.itens.map(i => i.numero_nf_compra).filter(n => n && n !== '-').flatMap(n => n.split(',').map(x => x.trim())))].join(', ') || '-';
 
                 linhasPeriodos += `
                     <tr style="background:#ffffff;">
@@ -624,6 +630,12 @@ function gerarSecaoPecas(periodos, total1, total2, total3, totalGeral) {
                             OS: ${[...new Set(prefixo.itens.map(i => i.numero_os))].join(', ')}
                         </td>
                         <td style="text-align:center; font-size:11px; color:#6c757d;">
+                            ${nfVenda}
+                        </td>
+                        <td style="text-align:center; font-size:11px; color:#6c757d;">
+                            ${nfCompra}
+                        </td>
+                        <td style="text-align:center; font-size:11px; color:#6c757d;">
                             ${totalInsumos} 
                         </td>   
                         <td style="text-align:right; font-size:11px; color:#6c757d;">
@@ -634,7 +646,7 @@ function gerarSecaoPecas(periodos, total1, total2, total3, totalGeral) {
             });
                 linhasPeriodos += `
                     <tr style="background:#e9f7ef; border-bottom:3px solid #dceeff;">
-                        <td colspan="4" style="padding:10px 12px; font-weight:700; font-size:12px; color:#155724;">
+                        <td colspan="6" style="padding:10px 12px; font-weight:700; font-size:12px; color:#155724;">
                             Subtotal Período
                         </td>
                         <td style="text-align:right; padding:10px 12px; font-weight:700; color:#28a745;">
@@ -645,7 +657,7 @@ function gerarSecaoPecas(periodos, total1, total2, total3, totalGeral) {
         } else {
             linhasPeriodos += `
                 <tr>
-                    <td colspan="5" style="text-align:center; padding:12px; font-size:11px; color:#999; font-style:italic;">
+                    <td colspan="7" style="text-align:center; padding:12px; font-size:11px; color:#999; font-style:italic;">
                         Nenhuma peça faturada neste período
                     </td>
                 </tr>
@@ -679,6 +691,8 @@ function gerarSecaoPecas(periodos, total1, total2, total3, totalGeral) {
                             <th>Período / Veículo</th>
                             <th>Modelo</th>
                             <th>Nº OS</th>
+                            <th style="text-align:center;">NF Venda</th>
+                            <th style="text-align:center;">NF Compra</th>
                             <th style="text-align:center;">Insumos Utilizados</th>
                             <th style="text-align:right;">Valor</th>
                         </tr>
@@ -686,7 +700,7 @@ function gerarSecaoPecas(periodos, total1, total2, total3, totalGeral) {
                     <tbody>${linhasPeriodos}</tbody>
                     <tfoot>
                         <tr style="background:#28a745; color:#fff; font-weight:700;">
-                            <td colspan="4" style="padding:10px 12px;">
+                            <td colspan="6" style="padding:10px 12px;">
                                 SUBTOTAL PEÇAS (Já Faturado - Fins Contábeis)
                             </td>
                             <td style="text-align:right; padding:10px 12px;">R$ ${formatarMoeda(totalGeral)}</td>
